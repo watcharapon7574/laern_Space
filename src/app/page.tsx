@@ -1,156 +1,103 @@
-import { Suspense } from 'react'
-import Link from 'next/link'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { MediaGrid } from '@/components/media-grid'
-import { HomeClientSections } from '@/components/home-client-sections'
-import { prisma } from '@/lib/prisma'
-import { Category } from '@prisma/client'
-import { Logo } from '@/components/logo'
-import { Upload } from 'lucide-react'
+import Image from "next/image";
 
-async function getPopularMedia() {
-  return await prisma.media.findMany({
-    where: {
-      status: 'APPROVED', // แสดงเฉพาะสื่อที่อนุมัติแล้ว
-    },
-    take: 8,
-    orderBy: [
-      { viewCount: 'desc' },
-      { createdAt: 'desc' },
-    ],
-  })
-}
-
-async function getPopularTags() {
-  const media = await prisma.media.findMany({
-    where: {
-      status: 'APPROVED', // แสดงเฉพาะสื่อที่อนุมัติแล้ว
-    },
-    select: { tags: true },
-  })
-
-  const tagCounts: Record<string, number> = {}
-
-  media.forEach((item) => {
-    const tags = JSON.parse(item.tags || '[]')
-    tags.forEach((tag: string) => {
-      tagCounts[tag] = (tagCounts[tag] || 0) + 1
-    })
-  })
-
-  return Object.entries(tagCounts)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 10)
-    .map(([tag]) => tag)
-}
-
-const categoryLabels: Record<Category, string> = {
-  GAME: 'เกม',
-  SCIENCE: 'วิทยาศาสตร์',
-  MATH: 'คณิต',
-  THAI: 'ภาษาไทย',
-  ENGLISH: 'ภาษาอังกฤษ',
-  SOCIAL: 'สังคม',
-  OTHER: 'อื่น ๆ',
-}
-
-export default async function HomePage() {
-  const [popularMedia, popularTags] = await Promise.all([
-    getPopularMedia(),
-    getPopularTags(),
-  ])
-
+export default function Home() {
   return (
-    <div className="space-y-8">
-      {/* Hero Section as Card (viewport full-bleed container) */}
-      <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen overflow-x-clip">
-        <div className="px-0 py-3 sm:py-4">
-          <div className="max-w-[80rem] mx-auto bg-card rounded-4xl shadow-2xl ring-1 ring-black/5 overflow-hidden">
-            <div className="px-3 sm:px-5 md:px-8 py-4 sm:py-6 md:py-8 bg-card">
-              <div className="flex items-center justify-center">
-                <div className="w-full">
-                  <Logo size="full" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
+      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
+        <Image
+          className="dark:invert"
+          src="/next.svg"
+          alt="Next.js logo"
+          width={180}
+          height={38}
+          priority
+        />
+        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
+          <li className="mb-2 tracking-[-.01em]">
+            Get started by editing{" "}
+            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
+              src/app/page.tsx
+            </code>
+            .
+          </li>
+          <li className="tracking-[-.01em]">
+            Save and see your changes instantly.
+          </li>
+        </ol>
 
-      {/* Submit Media Button */}
-      <div className="flex justify-center">
-        <Button asChild size="lg" className="gap-2">
-          <Link href="/submit">
-            <Upload className="h-5 w-5" />
-            ส่งสื่อการสอนของคุณ
-          </Link>
-        </Button>
-      </div>
-
-      {/* Favorites & Recently Viewed */}
-      <HomeClientSections />
-
-      {/* Categories */}
-      <section>
-        <h2 className="text-2xl font-bold mb-6">หมวดหมู่สื่อการสอน</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-          {Object.entries(categoryLabels).map(([key, label], index) => {
-            const colorClass = `tag-color-${(index % 8) + 1}`;
-            return (
-              <Link
-                key={key}
-                href={`/categories/${key.toLowerCase()}`}
-                className={`p-4 ${colorClass} rounded-xl border transition-all duration-300 text-center hover:scale-105 hover:shadow-lg hover:-translate-y-1`}
-              >
-                <div className="text-lg font-semibold">
-                  {label}
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Popular Tags */}
-      <section>
-        <h2 className="text-2xl font-bold mb-6">แท็กยอดนิยม</h2>
-        <div className="flex flex-wrap gap-2">
-          {popularTags.map((tag, index) => {
-            const colorClass = `tag-color-${(index % 8) + 1}`;
-            return (
-              <Link key={tag} href={`/search?q=${encodeURIComponent(tag)}`}>
-                <Badge className={`${colorClass} cursor-pointer transition-all duration-300 hover:scale-110 hover:-translate-y-1`}>
-                  {tag}
-                </Badge>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Popular Media */}
-      <section>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">สื่อยอดนิยม</h2>
-          <Link 
-            href="/search" 
-            className="text-primary hover:text-primary/80 font-medium"
+        <div className="flex gap-4 items-center flex-col sm:flex-row">
+          <a
+            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
+            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            ดูทั้งหมด →
-          </Link>
+            <Image
+              className="dark:invert"
+              src="/vercel.svg"
+              alt="Vercel logomark"
+              width={20}
+              height={20}
+            />
+            Deploy now
+          </a>
+          <a
+            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
+            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Read our docs
+          </a>
         </div>
-        
-        <Suspense fallback={
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-80 bg-muted animate-pulse rounded-lg" />
-            ))}
-          </div>
-        }>
-          <MediaGrid media={popularMedia} />
-        </Suspense>
-      </section>
+      </main>
+      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
+        <a
+          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Image
+            aria-hidden
+            src="/file.svg"
+            alt="File icon"
+            width={16}
+            height={16}
+          />
+          Learn
+        </a>
+        <a
+          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Image
+            aria-hidden
+            src="/window.svg"
+            alt="Window icon"
+            width={16}
+            height={16}
+          />
+          Examples
+        </a>
+        <a
+          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Image
+            aria-hidden
+            src="/globe.svg"
+            alt="Globe icon"
+            width={16}
+            height={16}
+          />
+          Go to nextjs.org →
+        </a>
+      </footer>
     </div>
-  )
+  );
 }
