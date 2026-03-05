@@ -58,7 +58,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       )
     }
 
-    const updates: any = {}
+    const updates: Record<string, string | null> = {}
 
     if (title && title !== existingMedia.title) {
       const newSlug = createSlug(title)

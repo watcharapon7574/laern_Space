@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useState, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { InfiniteMediaGrid } from '@/components/infinite-media-grid'
 import { SearchWithSuggestions } from '@/components/search-with-suggestions'
 import { Button } from '@/components/ui/button'
@@ -20,12 +20,11 @@ const categoryLabels: Record<Category, string> = {
   OTHER: 'อื่น ๆ',
 }
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams()
-  const router = useRouter()
   const initialQuery = searchParams.get('q') || ''
   const initialCategory = searchParams.get('category') || ''
-  
+
   const [query, setQuery] = useState(initialQuery)
   const [category, setCategory] = useState(initialCategory)
   const [searchKey, setSearchKey] = useState(0)
@@ -35,7 +34,7 @@ export default function SearchPage() {
     const params = new URLSearchParams()
     if (q) params.append('q', q)
     if (category) params.append('category', category)
-    
+
     const url = params.toString() ? `/search?${params.toString()}` : '/search'
     window.history.replaceState({}, '', url)
     setSearchKey((prev) => prev + 1)
@@ -81,7 +80,7 @@ export default function SearchPage() {
               placeholder="ค้นหาสื่อการสอน..."
             />
           </div>
-          
+
           <div className="sm:w-48">
             <Select value={category} onValueChange={handleCategoryChange}>
               <SelectTrigger>
@@ -97,7 +96,7 @@ export default function SearchPage() {
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="flex gap-2">
             <Button onClick={() => handleSearch()}>
               <Search className="h-4 w-4 mr-2" />
@@ -122,7 +121,7 @@ export default function SearchPage() {
           <span className="text-sm text-muted-foreground">ตัวกรองที่ใช้:</span>
           {query && (
             <Badge variant="secondary">
-              ค้นหา: "{query}"
+              ค้นหา: &ldquo;{query}&rdquo;
             </Badge>
           )}
           {category && (
@@ -145,5 +144,13 @@ export default function SearchPage() {
         }
       />
     </div>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div>กำลังโหลด...</div>}>
+      <SearchContent />
+    </Suspense>
   )
 }

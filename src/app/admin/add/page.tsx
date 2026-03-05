@@ -39,7 +39,7 @@ export default function AddMediaPage() {
   const [newTag, setNewTag] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [metadata, setMetadata] = useState<any>(null)
+  const [metadata, setMetadata] = useState<{ title?: string; description?: string; thumbnail?: string } | null>(null)
   const [fetchingMetadata, setFetchingMetadata] = useState(false)
 
   useEffect(() => {

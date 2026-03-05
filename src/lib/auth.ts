@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers'
+import crypto from 'crypto'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret'
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin'
@@ -30,7 +31,6 @@ export function createToken(username: string): string {
   const encodedHeader = base64UrlEncode(JSON.stringify(header))
   const encodedPayload = base64UrlEncode(JSON.stringify(payload))
 
-  const crypto = require('crypto')
   const signature = crypto
     .createHmac('sha256', JWT_SECRET)
     .update(`${encodedHeader}.${encodedPayload}`)
@@ -49,7 +49,6 @@ export function verifyToken(token: string): { username: string } | null {
 
     const [encodedHeader, encodedPayload, signature] = parts
 
-    const crypto = require('crypto')
     const expectedSignature = crypto
       .createHmac('sha256', JWT_SECRET)
       .update(`${encodedHeader}.${encodedPayload}`)

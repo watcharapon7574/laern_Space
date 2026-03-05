@@ -190,7 +190,7 @@ export function SearchWithSuggestions({
             </ul>
           ) : query.length >= 2 ? (
             <div className="p-3 text-center text-muted-foreground text-sm">
-              ไม่พบผลลัพธ์สำหรับ "{query}"
+              ไม่พบผลลัพธ์สำหรับ &ldquo;{query}&rdquo;
             </div>
           ) : null}
         </div>

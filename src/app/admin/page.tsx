@@ -9,16 +9,18 @@ import { Button } from '@/components/ui/button'
 import { formatNumber } from '@/lib/utils'
 import { Eye, Play, FileVideo, TrendingUp, BarChart3, Settings, CheckCircle, Plus } from 'lucide-react'
 
+interface MediaItem {
+  title: string
+  viewCount: number
+  playCount: number
+  category: string
+}
+
 interface Stats {
   totalMedia: number
   totalViews: number
   totalPlays: number
-  topMedia: Array<{
-    title: string
-    viewCount: number
-    playCount: number
-    category: string
-  }>
+  topMedia: MediaItem[]
   categoryCounts: Record<string, number>
 }
 
@@ -62,14 +64,14 @@ export default function AdminDashboard() {
       const data = await response.json()
       const media = data.media || []
 
-      const totalViews = media.reduce((sum: number, item: any) => sum + item.viewCount, 0)
-      const totalPlays = media.reduce((sum: number, item: any) => sum + item.playCount, 0)
+      const totalViews = media.reduce((sum: number, item: MediaItem) => sum + item.viewCount, 0)
+      const totalPlays = media.reduce((sum: number, item: MediaItem) => sum + item.playCount, 0)
 
       const topMedia = media
-        .sort((a: any, b: any) => b.viewCount - a.viewCount)
+        .sort((a: MediaItem, b: MediaItem) => b.viewCount - a.viewCount)
         .slice(0, 10)
 
-      const categoryCounts = media.reduce((acc: Record<string, number>, item: any) => {
+      const categoryCounts = media.reduce((acc: Record<string, number>, item: MediaItem) => {
         acc[item.category] = (acc[item.category] || 0) + 1
         return acc
       }, {})

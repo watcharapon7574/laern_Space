@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const period = searchParams.get('period') || '7d'
 
     // Calculate date range
-    let startDate = new Date()
+    const startDate = new Date()
     switch (period) {
       case '24h':
         startDate.setHours(startDate.getHours() - 24)

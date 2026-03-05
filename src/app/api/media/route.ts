@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isAuthenticated } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { createSlug, fetchMetadata, isAllowedDomain } from '@/lib/utils'
-import { Category, MediaStatus } from '@prisma/client'
+import { Category, MediaStatus, Prisma } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,12 +14,12 @@ export async function GET(request: NextRequest) {
     const q = searchParams.get('q')
     const skip = (page - 1) * limit
 
-    const where: any = {
+    const where: Prisma.MediaWhereInput = {
       status: MediaStatus.APPROVED, // แสดงเฉพาะสื่อที่อนุมัติแล้ว
     }
 
     if (category && Object.values(Category).includes(category as Category)) {
-      where.category = category
+      where.category = category as Category
     }
 
     if (q) {

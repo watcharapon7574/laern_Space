@@ -43,9 +43,9 @@ export async function POST(request: NextRequest) {
       success: true,
       url,
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Upload error:', error)
-    const message = error?.message || 'เกิดข้อผิดพลาดในการอัพโหลด'
+    const message = error instanceof Error ? error.message : 'เกิดข้อผิดพลาดในการอัพโหลด'
     return NextResponse.json(
       { error: message },
       { status: 500 }
