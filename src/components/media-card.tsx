@@ -109,16 +109,17 @@ export function MediaCard({
       </div>
 
       <div className="p-4 pt-0 flex items-center justify-between bg-card">
-        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+        <div className="flex items-center space-x-3 text-sm text-muted-foreground">
+          <LikeButton mediaId={id} initialLikeCount={likeCount} variant="icon" className="text-base" />
+          <div className="w-px h-4 bg-border" />
           <div className="flex items-center space-x-1">
-            <Eye className="h-4 w-4" />
+            <Eye className="h-3.5 w-3.5" />
             <span>{formatNumber(viewCount)}</span>
           </div>
           <div className="flex items-center space-x-1">
-            <Play className="h-4 w-4" />
+            <Play className="h-3.5 w-3.5" />
             <span>{formatNumber(playCount)}</span>
           </div>
-          <LikeButton mediaId={id} initialLikeCount={likeCount} variant="icon" />
         </div>
 
         <div className="flex space-x-2">

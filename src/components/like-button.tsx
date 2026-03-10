@@ -65,19 +65,19 @@ export function LikeButton({
         onClick={handleClick}
         disabled={loading}
         className={cn(
-          'flex items-center gap-1 transition-all hover:scale-110',
+          'flex items-center gap-1.5 transition-all hover:scale-110',
           className
         )}
         title={liked ? 'เอาถูกใจออก' : 'ถูกใจ'}
       >
         <Heart
           className={cn(
-            'h-4 w-4 transition-colors',
-            liked ? 'fill-red-500 text-red-500' : 'text-muted-foreground'
+            'h-[1.1em] w-[1.1em] transition-colors',
+            liked ? 'fill-red-500 text-red-500' : 'text-muted-foreground hover:text-red-400'
           )}
         />
         {showCount && (
-          <span className={cn('text-sm', liked ? 'text-red-500' : 'text-muted-foreground')}>
+          <span className={cn('text-[1em] font-medium', liked ? 'text-red-500' : 'text-muted-foreground')}>
             {formatNumber(likeCount)}
           </span>
         )}
