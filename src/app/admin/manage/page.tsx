@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { BulkActions, MediaPreviewModal, ExportButton } from '@/components/admin'
+import { BulkActions, MediaPreviewModal, MediaEditModal, ExportButton } from '@/components/admin'
 import { formatNumber } from '@/lib/utils'
 import {
   Eye,
@@ -24,6 +24,8 @@ import {
   Square,
   ExternalLink,
   Loader2,
+  Trash2,
+  Pencil,
 } from 'lucide-react'
 import { useCategories } from '@/lib/hooks/use-categories'
 
@@ -58,7 +60,24 @@ export default function ManageMediaPage() {
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [previewMedia, setPreviewMedia] = useState<Media | null>(null)
+  const [editMedia, setEditMedia] = useState<Media | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const { categories, getLabel } = useCategories()
+
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`ยืนยันลบสื่อ "${title}" หรือไม่?\nการลบจะไม่สามารถย้อนกลับได้`)) return
+    setDeletingId(id)
+    try {
+      const res = await fetch(`/api/media/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed')
+      setMedia((prev) => prev.filter((m) => m.id !== id))
+      setSelectedIds((prev) => prev.filter((i) => i !== id))
+    } catch {
+      alert('ลบสื่อไม่สำเร็จ')
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   useEffect(() => {
     fetchMedia()
@@ -271,10 +290,32 @@ export default function ManageMediaPage() {
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation()
+                      setEditMedia(item)
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation()
                       window.open(item.url, '_blank')
                     }}
                   >
                     <ExternalLink className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={deletingId === item.id}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDelete(item.id, item.title)
+                    }}
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  >
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -295,6 +336,14 @@ export default function ManageMediaPage() {
         open={previewMedia !== null}
         onOpenChange={(open) => !open && setPreviewMedia(null)}
         onActionComplete={fetchMedia}
+      />
+
+      {/* Edit Modal */}
+      <MediaEditModal
+        media={editMedia}
+        open={editMedia !== null}
+        onOpenChange={(open) => !open && setEditMedia(null)}
+        onSaved={fetchMedia}
       />
     </div>
   )

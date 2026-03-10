@@ -67,7 +67,7 @@ export default function SignInPage() {
               <Input
                 id="username"
                 type="text"
-                placeholder="admin"
+                placeholder="ชื่อผู้ใช้"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -81,7 +81,7 @@ export default function SignInPage() {
               <Input
                 id="password"
                 type="password"
-                placeholder="admin123"
+                placeholder="รหัสผ่าน"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -96,15 +96,6 @@ export default function SignInPage() {
             </Button>
           </form>
 
-          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-2">
-              ข้อมูลสำหรับทดสอบ:
-            </p>
-            <div className="text-xs text-blue-600 dark:text-blue-300 space-y-1">
-              <div>ชื่อผู้ใช้: admin</div>
-              <div>รหัสผ่าน: admin123</div>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>
