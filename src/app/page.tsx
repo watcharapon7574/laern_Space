@@ -118,7 +118,7 @@ export default async function HomePage() {
             <Link
               key={cat.id}
               href={`/categories/${cat.slug}`}
-              className={`p-4 ${cat.cssClass} rounded-xl border transition-all duration-300 text-center hover:scale-105 hover:shadow-lg hover:-translate-y-1`}
+              className={`px-4 py-2 ${cat.cssClass} rounded-xl border transition-all duration-300 text-center hover:scale-105 hover:shadow-lg hover:-translate-y-1`}
             >
               <div className="text-lg font-semibold">
                 {cat.label}
