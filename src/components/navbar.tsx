@@ -8,16 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Logo } from '@/components/logo'
-
-const categories = [
-  { key: 'GAME', label: 'เกม', href: '/categories/game' },
-  { key: 'SCIENCE', label: 'วิทยาศาสตร์', href: '/categories/science' },
-  { key: 'MATH', label: 'คณิต', href: '/categories/math' },
-  { key: 'THAI', label: 'ภาษาไทย', href: '/categories/thai' },
-  { key: 'ENGLISH', label: 'ภาษาอังกฤษ', href: '/categories/english' },
-  { key: 'SOCIAL', label: 'สังคม', href: '/categories/social' },
-  { key: 'OTHER', label: 'อื่น ๆ', href: '/categories/other' },
-]
+import { useCategories } from '@/lib/hooks/use-categories'
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -26,6 +17,7 @@ export function Navbar() {
   const router = useRouter()
   const [authenticated, setAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
+  const { categories } = useCategories()
 
   useEffect(() => {
     checkAuth()
@@ -89,20 +81,23 @@ export function Navbar() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                {categories.map((category) => (
-                  <DropdownMenuItem key={category.key} asChild>
-                    <Link
-                      href={category.href}
-                      className={`w-full ${
-                        pathname === category.href
-                          ? 'bg-primary/10 text-primary'
-                          : ''
-                      }`}
-                    >
-                      {category.label}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
+                {categories.map((cat) => {
+                  const href = `/categories/${cat.slug}`
+                  return (
+                    <DropdownMenuItem key={cat.id} asChild>
+                      <Link
+                        href={href}
+                        className={`w-full ${
+                          pathname === href
+                            ? 'bg-primary/10 text-primary'
+                            : ''
+                        }`}
+                      >
+                        {cat.label}
+                      </Link>
+                    </DropdownMenuItem>
+                  )
+                })}
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -169,20 +164,23 @@ export function Navbar() {
                 </div>
               </form>
 
-              {categories.map((category) => (
-                <Link
-                  key={category.key}
-                  href={category.href}
-                  className={`block px-3 py-2 rounded-md text-base font-medium ${
-                    pathname === category.href
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-foreground hover:bg-muted-foreground/10'
-                  }`}
-                  onClick={() => setIsOpen(false)}
-                >
-                  {category.label}
-                </Link>
-              ))}
+              {categories.map((cat) => {
+                const href = `/categories/${cat.slug}`
+                return (
+                  <Link
+                    key={cat.id}
+                    href={href}
+                    className={`block px-3 py-2 rounded-md text-base font-medium ${
+                      pathname === href
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-foreground hover:bg-muted-foreground/10'
+                    }`}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {cat.label}
+                  </Link>
+                )
+              })}
 
               <div className="border-t border-border pt-4 mt-4">
                 {authenticated ? (

@@ -14,6 +14,7 @@ async function testConnection() {
     // Fetch sample data
     const media = await prisma.media.findMany({
       take: 3,
+      include: { category: true },
       orderBy: { createdAt: 'desc' },
     })
 
@@ -22,7 +23,7 @@ async function testConnection() {
       console.log(`\n${index + 1}. ${item.title}`)
       console.log(`   - ID: ${item.id}`)
       console.log(`   - Slug: ${item.slug}`)
-      console.log(`   - Category: ${item.category}`)
+      console.log(`   - Category: ${item.category?.label} (${item.categoryId})`)
       console.log(`   - Status: ${item.status}`)
       console.log(`   - Submitted by: ${item.submittedBy || 'N/A'}`)
       console.log(`   - Views: ${item.viewCount}, Plays: ${item.playCount}`)

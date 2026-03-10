@@ -9,20 +9,28 @@ import { CheckCircle, XCircle, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
 import Link from 'next/link'
-import type { Media, Category } from '@prisma/client'
 
-const categoryLabels: Record<Category, string> = {
-  GAME: 'เกม',
-  SCIENCE: 'วิทยาศาสตร์',
-  MATH: 'คณิต',
-  THAI: 'ภาษาไทย',
-  ENGLISH: 'ภาษาอังกฤษ',
-  SOCIAL: 'สังคม',
-  OTHER: 'อื่น ๆ',
+interface MediaWithCategory {
+  id: string
+  slug: string
+  title: string
+  url: string
+  thumbnail: string | null
+  description: string | null
+  category: { key: string; label: string }
+  tags: string
+  status: string
+  submittedBy: string | null
+  viewCount: number
+  playCount: number
+  createdAt: Date | string
+  updatedAt: Date | string
+  categoryId: string
+  pdfDocument: string | null
 }
 
 interface ApprovalListProps {
-  initialMedia: Media[]
+  initialMedia: MediaWithCategory[]
 }
 
 export function ApprovalList({ initialMedia }: ApprovalListProps) {
@@ -43,7 +51,6 @@ export function ApprovalList({ initialMedia }: ApprovalListProps) {
         throw new Error('Failed to update status')
       }
 
-      // Remove from list
       setMedia((prev) => prev.filter((m) => m.id !== id))
 
       toast.success(
@@ -78,7 +85,7 @@ export function ApprovalList({ initialMedia }: ApprovalListProps) {
               <CardTitle className="line-clamp-2">{item.title}</CardTitle>
               <div className="flex gap-2 flex-wrap mt-2">
                 <Badge variant="secondary">
-                  {categoryLabels[item.category]}
+                  {item.category?.label || ''}
                 </Badge>
                 {tags.slice(0, 2).map((tag) => (
                   <Badge key={tag} variant="outline">

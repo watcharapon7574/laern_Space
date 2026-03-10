@@ -62,14 +62,19 @@ export async function GET(request: NextRequest) {
 
     // Get category stats
     const categoryStats = await prisma.media.groupBy({
-      by: ['category'],
+      by: ['categoryId'],
       where: { status: MediaStatus.APPROVED },
       _count: { id: true },
       _sum: { viewCount: true, playCount: true },
     })
 
+    // Fetch category details for labels
+    const categories = await prisma.category.findMany()
+    const categoryMap = Object.fromEntries(categories.map((c) => [c.id, c]))
+
     const categoryData = categoryStats.map((c) => ({
-      category: c.category,
+      category: categoryMap[c.categoryId]?.key || c.categoryId,
+      label: categoryMap[c.categoryId]?.label || c.categoryId,
       count: c._count.id,
       views: c._sum.viewCount || 0,
       plays: c._sum.playCount || 0,
@@ -84,7 +89,8 @@ export async function GET(request: NextRequest) {
         id: true,
         title: true,
         slug: true,
-        category: true,
+        categoryId: true,
+        category: { select: { key: true, label: true } },
         viewCount: true,
         playCount: true,
       },
@@ -93,7 +99,7 @@ export async function GET(request: NextRequest) {
     // Get overall stats
     const overallStats = await prisma.media.aggregate({
       where: { status: MediaStatus.APPROVED },
-      _sum: { viewCount: true, playCount: true },
+      _sum: { viewCount: true, playCount: true, likeCount: true },
       _count: { id: true },
     })
 
@@ -114,6 +120,7 @@ export async function GET(request: NextRequest) {
         totalMedia: overallStats._count.id,
         totalViews: overallStats._sum.viewCount || 0,
         totalPlays: overallStats._sum.playCount || 0,
+        totalLikes: overallStats._sum.likeCount || 0,
         pendingApproval: pendingCount,
         recentViews: recentViewsCount,
         playRate: overallStats._sum.viewCount

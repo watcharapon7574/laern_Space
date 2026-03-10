@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isAuthenticated } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { createSlug, fetchMetadata, isAllowedDomain } from '@/lib/utils'
-import { Category, MediaStatus, Prisma } from '@prisma/client'
+import { MediaStatus, Prisma } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,11 +15,11 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     const where: Prisma.MediaWhereInput = {
-      status: MediaStatus.APPROVED, // แสดงเฉพาะสื่อที่อนุมัติแล้ว
+      status: MediaStatus.APPROVED,
     }
 
-    if (category && Object.values(Category).includes(category as Category)) {
-      where.category = category as Category
+    if (category) {
+      where.category = { key: category }
     }
 
     if (q) {
@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
     const [media, total] = await Promise.all([
       prisma.media.findMany({
         where,
+        include: { category: true },
         skip,
         take: limit,
         orderBy: [
@@ -68,7 +69,6 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // ตรวจสอบ authentication
     if (!(await isAuthenticated())) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -77,9 +77,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { title, url, description, category, tags } = body
+    const { title, url, description, categoryId, tags } = body
 
-    if (!title || !url || !category) {
+    if (!title || !url || !categoryId) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -93,7 +93,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!Object.values(Category).includes(category)) {
+    const categoryExists = await prisma.category.findUnique({ where: { id: categoryId } })
+    if (!categoryExists) {
       return NextResponse.json(
         { error: 'Invalid category' },
         { status: 400 }
@@ -119,7 +120,6 @@ export async function POST(request: NextRequest) {
       thumbnail = metadata.thumbnail
     }
 
-    // Admin สร้างสื่อ = อนุมัติทันที
     const media = await prisma.media.create({
       data: {
         title,
@@ -127,11 +127,12 @@ export async function POST(request: NextRequest) {
         url,
         thumbnail,
         description: description || null,
-        category,
+        categoryId,
         tags: JSON.stringify(tags || []),
         status: MediaStatus.APPROVED,
         submittedBy: 'admin',
       },
+      include: { category: true },
     })
 
     return NextResponse.json(media, { status: 201 })

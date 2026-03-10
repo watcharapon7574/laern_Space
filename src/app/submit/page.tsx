@@ -11,24 +11,14 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, CheckCircle2, Home, Upload, X, ImageIcon } from 'lucide-react'
-import { Category } from '@prisma/client'
-
-const categoryLabels: Record<Category, string> = {
-  GAME: 'เกม',
-  SCIENCE: 'วิทยาศาสตร์',
-  MATH: 'คณิต',
-  THAI: 'ภาษาไทย',
-  ENGLISH: 'ภาษาอังกฤษ',
-  SOCIAL: 'สังคม',
-  OTHER: 'อื่น ๆ',
-}
+import { useCategories } from '@/lib/hooks/use-categories'
 
 export default function SubmitMediaPage() {
   const [submittedBy, setSubmittedBy] = useState('')
   const [title, setTitle] = useState('')
   const [url, setUrl] = useState('')
   const [description, setDescription] = useState('')
-  const [category, setCategory] = useState<Category>('GAME')
+  const [categoryId, setCategoryId] = useState('')
   const [tags, setTags] = useState('')
   const [thumbnail, setThumbnail] = useState<string | null>(null)
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null)
@@ -41,47 +31,38 @@ export default function SubmitMediaPage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const router = useRouter()
+  const { categories } = useCategories()
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    console.log('File selected:', file.name, file.type, file.size)
-
-    // Preview
     const reader = new FileReader()
     reader.onloadend = () => {
-      console.log('Preview loaded')
       setThumbnailPreview(reader.result as string)
     }
     reader.readAsDataURL(file)
 
-    // Upload
     setUploadingImage(true)
     try {
       const formData = new FormData()
       formData.append('file', file)
 
-      console.log('Uploading to /api/upload...')
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       })
 
       const data = await response.json()
-      console.log('Upload response:', data)
 
       if (!response.ok) {
-        console.error('Upload failed:', data.error)
         setError(data.error || 'เกิดข้อผิดพลาดในการอัพโหลดรูปภาพ')
         setThumbnailPreview(null)
         return
       }
 
-      console.log('Upload successful, URL:', data.url)
       setThumbnail(data.url)
     } catch (err) {
-      console.error('Upload error:', err)
       setError('เกิดข้อผิดพลาดในการอัพโหลดรูปภาพ')
       setThumbnailPreview(null)
     } finally {
@@ -132,13 +113,12 @@ export default function SubmitMediaPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    
-    // Honeypot check - if filled, it's a bot
+
     if (honeypot) {
       setError('การส่งไม่สำเร็จ')
       return
     }
-    
+
     setLoading(true)
 
     try {
@@ -150,7 +130,7 @@ export default function SubmitMediaPage() {
           title,
           url,
           description,
-          category,
+          categoryId,
           tags: tags.split(',').map(t => t.trim()).filter(Boolean),
           thumbnail,
           pdfDocument,
@@ -166,7 +146,6 @@ export default function SubmitMediaPage() {
 
       setSuccess(true)
 
-      // Reset form
       setTimeout(() => {
         setSubmittedBy('')
         setTitle('')
@@ -285,7 +264,7 @@ export default function SubmitMediaPage() {
                 />
               </div>
 
-              {/* Honeypot field - hidden from users, only bots will fill it */}
+              {/* Honeypot field */}
               <input
                 type="text"
                 name="website"
@@ -403,14 +382,14 @@ export default function SubmitMediaPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="category">หมวดหมู่ *</Label>
-                <Select value={category} onValueChange={(value) => setCategory(value as Category)} disabled={loading}>
+                <Select value={categoryId} onValueChange={setCategoryId} disabled={loading}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="เลือกหมวดหมู่" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(categoryLabels).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>
-                        {label}
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.label}
                       </SelectItem>
                     ))}
                   </SelectContent>

@@ -7,15 +7,18 @@ import { Button } from '@/components/ui/button'
 import { MediaGrid } from '@/components/media-grid'
 import { HomeClientSections } from '@/components/home-client-sections'
 import { prisma } from '@/lib/prisma'
-import { Category } from '@prisma/client'
+import { getCategories } from '@/lib/categories'
 import { Logo } from '@/components/logo'
+import { PublicStats } from '@/components/public-stats'
 import { Upload } from 'lucide-react'
+import { MediaStatus } from '@prisma/client'
 
 async function getPopularMedia() {
   return await prisma.media.findMany({
     where: {
-      status: 'APPROVED', // แสดงเฉพาะสื่อที่อนุมัติแล้ว
+      status: 'APPROVED',
     },
+    include: { category: true },
     take: 8,
     orderBy: [
       { viewCount: 'desc' },
@@ -27,7 +30,7 @@ async function getPopularMedia() {
 async function getPopularTags() {
   const media = await prisma.media.findMany({
     where: {
-      status: 'APPROVED', // แสดงเฉพาะสื่อที่อนุมัติแล้ว
+      status: 'APPROVED',
     },
     select: { tags: true },
   })
@@ -47,20 +50,31 @@ async function getPopularTags() {
     .map(([tag]) => tag)
 }
 
-const categoryLabels: Record<Category, string> = {
-  GAME: 'เกม',
-  SCIENCE: 'วิทยาศาสตร์',
-  MATH: 'คณิต',
-  THAI: 'ภาษาไทย',
-  ENGLISH: 'ภาษาอังกฤษ',
-  SOCIAL: 'สังคม',
-  OTHER: 'อื่น ๆ',
+async function getPublicStats() {
+  const [stats, categoryCount] = await Promise.all([
+    prisma.media.aggregate({
+      where: { status: MediaStatus.APPROVED },
+      _sum: { viewCount: true, playCount: true, likeCount: true },
+      _count: { id: true },
+    }),
+    prisma.category.count(),
+  ])
+
+  return {
+    totalMedia: stats._count.id,
+    totalViews: stats._sum.viewCount || 0,
+    totalPlays: stats._sum.playCount || 0,
+    totalLikes: stats._sum.likeCount || 0,
+    totalCategories: categoryCount,
+  }
 }
 
 export default async function HomePage() {
-  const [popularMedia, popularTags] = await Promise.all([
+  const [popularMedia, popularTags, categories, publicStats] = await Promise.all([
     getPopularMedia(),
     getPopularTags(),
+    getCategories(),
+    getPublicStats(),
   ])
 
   return (
@@ -90,6 +104,9 @@ export default async function HomePage() {
         </Button>
       </div>
 
+      {/* Public Stats */}
+      <PublicStats stats={publicStats} />
+
       {/* Favorites & Recently Viewed */}
       <HomeClientSections />
 
@@ -97,20 +114,17 @@ export default async function HomePage() {
       <section>
         <h2 className="text-2xl font-bold mb-6">หมวดหมู่สื่อการสอน</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-          {Object.entries(categoryLabels).map(([key, label], index) => {
-            const colorClass = `tag-color-${(index % 8) + 1}`;
-            return (
-              <Link
-                key={key}
-                href={`/categories/${key.toLowerCase()}`}
-                className={`p-4 ${colorClass} rounded-xl border transition-all duration-300 text-center hover:scale-105 hover:shadow-lg hover:-translate-y-1`}
-              >
-                <div className="text-lg font-semibold">
-                  {label}
-                </div>
-              </Link>
-            );
-          })}
+          {categories.map((cat) => (
+            <Link
+              key={cat.id}
+              href={`/categories/${cat.slug}`}
+              className={`p-4 ${cat.cssClass} rounded-xl border transition-all duration-300 text-center hover:scale-105 hover:shadow-lg hover:-translate-y-1`}
+            >
+              <div className="text-lg font-semibold">
+                {cat.label}
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
 
@@ -135,14 +149,14 @@ export default async function HomePage() {
       <section>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold">สื่อยอดนิยม</h2>
-          <Link 
-            href="/search" 
+          <Link
+            href="/search"
             className="text-primary hover:text-primary/80 font-medium"
           >
             ดูทั้งหมด →
           </Link>
         </div>
-        
+
         <Suspense fallback={
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Array.from({ length: 8 }).map((_, i) => (

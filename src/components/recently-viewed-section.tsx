@@ -4,22 +4,14 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRecentlyViewed } from '@/lib/hooks'
+import { useCategories } from '@/lib/hooks/use-categories'
 import { Clock, Play, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
-const categoryLabels: Record<string, string> = {
-  GAME: 'เกม',
-  SCIENCE: 'วิทยาศาสตร์',
-  MATH: 'คณิต',
-  THAI: 'ภาษาไทย',
-  ENGLISH: 'ภาษาอังกฤษ',
-  SOCIAL: 'สังคม',
-  OTHER: 'อื่น ๆ',
-}
-
 export function RecentlyViewedSection() {
   const { recentlyViewed, clearRecentlyViewed } = useRecentlyViewed()
+  const { getLabel } = useCategories()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -72,7 +64,7 @@ export function RecentlyViewedSection() {
               {media.title}
             </p>
             <Badge variant="secondary" className="text-xs mt-1">
-              {categoryLabels[media.category] || media.category}
+              {getLabel(media.category)}
             </Badge>
           </Link>
         ))}

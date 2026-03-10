@@ -3,7 +3,12 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { MediaCard } from '@/components/media-card'
 import { Loader2 } from 'lucide-react'
-import { Category } from '@prisma/client'
+
+interface CategoryInfo {
+  key: string
+  label: string
+  cssClass: string
+}
 
 interface Media {
   id: string
@@ -12,10 +17,11 @@ interface Media {
   url: string
   thumbnail?: string | null
   description?: string | null
-  category: Category
+  category: CategoryInfo
   tags: string
   viewCount: number
   playCount: number
+  likeCount: number
   createdAt: string
 }
 
@@ -142,6 +148,7 @@ export function InfiniteMediaGrid({
             tags={JSON.parse(item.tags || '[]')}
             viewCount={item.viewCount}
             playCount={item.playCount}
+            likeCount={item.likeCount}
             createdAt={new Date(item.createdAt)}
           />
         ))}

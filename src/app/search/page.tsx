@@ -8,17 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Filter, Search } from 'lucide-react'
-import { Category } from '@prisma/client'
-
-const categoryLabels: Record<Category, string> = {
-  GAME: 'เกม',
-  SCIENCE: 'วิทยาศาสตร์',
-  MATH: 'คณิต',
-  THAI: 'ภาษาไทย',
-  ENGLISH: 'ภาษาอังกฤษ',
-  SOCIAL: 'สังคม',
-  OTHER: 'อื่น ๆ',
-}
+import { useCategories } from '@/lib/hooks/use-categories'
 
 function SearchContent() {
   const searchParams = useSearchParams()
@@ -28,6 +18,7 @@ function SearchContent() {
   const [query, setQuery] = useState(initialQuery)
   const [category, setCategory] = useState(initialCategory)
   const [searchKey, setSearchKey] = useState(0)
+  const { categories, getLabel } = useCategories()
 
   const handleSearch = (searchQuery?: string) => {
     const q = searchQuery !== undefined ? searchQuery : query
@@ -88,9 +79,9 @@ function SearchContent() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">ทุกหมวดหมู่</SelectItem>
-                {Object.entries(categoryLabels).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>
-                    {label}
+                {categories.map((cat) => (
+                  <SelectItem key={cat.key} value={cat.key}>
+                    {cat.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -126,7 +117,7 @@ function SearchContent() {
           )}
           {category && (
             <Badge variant="secondary">
-              หมวดหมู่: {categoryLabels[category as Category]}
+              หมวดหมู่: {getLabel(category)}
             </Badge>
           )}
         </div>

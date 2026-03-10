@@ -7,7 +7,6 @@ export const supabase = createClient(supabaseUrl, supabaseKey)
 
 // Database types
 export type MediaStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
-export type Category = 'GAME' | 'SCIENCE' | 'MATH' | 'THAI' | 'ENGLISH' | 'SOCIAL' | 'OTHER'
 
 export interface Media {
   id: string
@@ -16,7 +15,7 @@ export interface Media {
   url: string
   thumbnail: string | null
   description: string | null
-  category: Category
+  category_id: string
   tags: string // JSON string array
   status: MediaStatus
   submitted_by: string | null
@@ -32,76 +31,76 @@ export const mediaQueries = {
   async getApproved() {
     const { data, error } = await supabase
       .from('ai_edugame')
-      .select('*')
+      .select('*, categories(*)')
       .eq('status', 'APPROVED')
       .order('created_at', { ascending: false })
 
     if (error) throw error
-    return data as Media[]
+    return data as (Media & { categories: { key: string; label: string } })[]
   },
 
   // Get popular media (approved, sorted by views)
   async getPopular(limit = 8) {
     const { data, error } = await supabase
       .from('ai_edugame')
-      .select('*')
+      .select('*, categories(*)')
       .eq('status', 'APPROVED')
       .order('view_count', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(limit)
 
     if (error) throw error
-    return data as Media[]
+    return data as (Media & { categories: { key: string; label: string } })[]
   },
 
   // Get media by slug
   async getBySlug(slug: string) {
     const { data, error } = await supabase
       .from('ai_edugame')
-      .select('*')
+      .select('*, categories(*)')
       .eq('slug', slug)
       .single()
 
     if (error) throw error
-    return data as Media
+    return data as Media & { categories: { key: string; label: string } }
   },
 
   // Get pending media (for admin)
   async getPending() {
     const { data, error } = await supabase
       .from('ai_edugame')
-      .select('*')
+      .select('*, categories(*)')
       .eq('status', 'PENDING')
       .order('created_at', { ascending: false })
 
     if (error) throw error
-    return data as Media[]
+    return data as (Media & { categories: { key: string; label: string } })[]
   },
 
   // Get media by category
-  async getByCategory(category: Category, status: MediaStatus = 'APPROVED') {
+  async getByCategory(categoryId: string, status: MediaStatus = 'APPROVED') {
     const { data, error } = await supabase
       .from('ai_edugame')
-      .select('*')
-      .eq('category', category)
+      .select('*, categories(*)')
+      .eq('category_id', categoryId)
       .eq('status', status)
       .order('created_at', { ascending: false })
 
     if (error) throw error
-    return data as Media[]
+    return data as (Media & { categories: { key: string; label: string } })[]
   },
 
   // Search media
   async search(query: string, status: MediaStatus = 'APPROVED') {
     const { data, error } = await supabase
       .from('ai_edugame')
-      .select('*')
+      .select('*, categories(*)')
       .eq('status', status)
       .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
       .order('created_at', { ascending: false })
 
     if (error) throw error
-    return data as Media[]
+    return data as (Media & { categories: { key: string; label: string } })[]
   },
 
   // Create new media
@@ -136,7 +135,6 @@ export const mediaQueries = {
     })
 
     if (error) {
-      // Fallback if function doesn't exist
       const media = await this.getBySlug(id)
       const { error: updateError } = await supabase
         .from('ai_edugame')
@@ -156,7 +154,6 @@ export const mediaQueries = {
     })
 
     if (error) {
-      // Fallback if function doesn't exist
       const media = await this.getBySlug(id)
       const { error: updateError } = await supabase
         .from('ai_edugame')

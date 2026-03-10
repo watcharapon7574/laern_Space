@@ -15,41 +15,23 @@ import {
 import { SimpleBarChart, SimpleLineChart, StatCard } from '@/components/admin'
 import { ExportButton } from '@/components/admin'
 import { formatNumber } from '@/lib/utils'
-import { Eye, Play, FileVideo, TrendingUp, Clock, BarChart3, Loader2 } from 'lucide-react'
+import { Eye, Play, FileVideo, TrendingUp, Clock, BarChart3, Heart, Loader2 } from 'lucide-react'
+import { useCategories } from '@/lib/hooks/use-categories'
 
 interface AnalyticsData {
   period: string
   dailyData: { date: string; views: number; uniqueMedia: number }[]
-  categoryData: { category: string; count: number; views: number; plays: number }[]
-  topMedia: { id: string; title: string; slug: string; category: string; viewCount: number; playCount: number }[]
+  categoryData: { category: string; label?: string; count: number; views: number; plays: number }[]
+  topMedia: { id: string; title: string; slug: string; category?: { key: string; label: string }; viewCount: number; playCount: number }[]
   summary: {
     totalMedia: number
     totalViews: number
     totalPlays: number
+    totalLikes: number
     pendingApproval: number
     recentViews: number
     playRate: number
   }
-}
-
-const categoryLabels: Record<string, string> = {
-  GAME: 'เกม',
-  SCIENCE: 'วิทยาศาสตร์',
-  MATH: 'คณิต',
-  THAI: 'ภาษาไทย',
-  ENGLISH: 'ภาษาอังกฤษ',
-  SOCIAL: 'สังคม',
-  OTHER: 'อื่น ๆ',
-}
-
-const categoryColors: Record<string, string> = {
-  GAME: '#8b5cf6',
-  SCIENCE: '#22c55e',
-  MATH: '#3b82f6',
-  THAI: '#ef4444',
-  ENGLISH: '#f97316',
-  SOCIAL: '#6366f1',
-  OTHER: '#14b8a6',
 }
 
 export default function AnalyticsPage() {
@@ -57,6 +39,7 @@ export default function AnalyticsPage() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState('7d')
+  const { getLabel, getColor } = useCategories()
 
   useEffect(() => {
     fetchAnalytics()
@@ -122,7 +105,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         <StatCard
           title="สื่อทั้งหมด"
           value={analytics.summary.totalMedia}
@@ -137,6 +120,11 @@ export default function AnalyticsPage() {
           title="การเล่นรวม"
           value={analytics.summary.totalPlays}
           icon={<Play className="h-4 w-4 text-muted-foreground" />}
+        />
+        <StatCard
+          title="ถูกใจรวม"
+          value={analytics.summary.totalLikes}
+          icon={<Heart className="h-4 w-4 text-red-500" />}
         />
         <StatCard
           title="อัตราการเล่น"
@@ -186,9 +174,9 @@ export default function AnalyticsPage() {
           <CardContent>
             <SimpleBarChart
               data={analytics.categoryData.map((c) => ({
-                label: categoryLabels[c.category] || c.category,
+                label: c.label || getLabel(c.category),
                 value: c.count,
-                color: categoryColors[c.category] || '#3b82f6',
+                color: getColor(c.category),
               }))}
               height={200}
             />
@@ -204,9 +192,9 @@ export default function AnalyticsPage() {
           <CardContent>
             <SimpleBarChart
               data={analytics.categoryData.map((c) => ({
-                label: categoryLabels[c.category] || c.category,
+                label: c.label || getLabel(c.category),
                 value: c.views,
-                color: categoryColors[c.category] || '#3b82f6',
+                color: getColor(c.category),
               }))}
               height={200}
             />
@@ -230,7 +218,7 @@ export default function AnalyticsPage() {
                     <div className="min-w-0 flex-1">
                       <p className="font-medium truncate">{media.title}</p>
                       <Badge variant="outline" className="text-xs mt-1">
-                        {categoryLabels[media.category]}
+                        {media.category?.label || ''}
                       </Badge>
                     </div>
                   </div>

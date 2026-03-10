@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isAuthenticated } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { createSlug, isAllowedDomain } from '@/lib/utils'
-import { Category } from '@prisma/client'
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -14,6 +13,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     const media = await prisma.media.findUnique({
       where: { id },
+      include: { category: true },
     })
 
     if (!media) {
@@ -45,7 +45,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     const { id } = await context.params
     const body = await request.json()
-    const { title, url, description, category, tags, thumbnail } = body
+    const { title, url, description, categoryId, tags, thumbnail } = body
 
     const existingMedia = await prisma.media.findUnique({
       where: { id },
@@ -94,14 +94,15 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       updates.description = description || null
     }
 
-    if (category) {
-      if (!Object.values(Category).includes(category)) {
+    if (categoryId) {
+      const categoryExists = await prisma.category.findUnique({ where: { id: categoryId } })
+      if (!categoryExists) {
         return NextResponse.json(
           { error: 'Invalid category' },
           { status: 400 }
         )
       }
-      updates.category = category
+      updates.categoryId = categoryId
     }
 
     if (tags !== undefined) {
@@ -119,6 +120,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const updatedMedia = await prisma.media.update({
       where: { id },
       data: updates,
+      include: { category: true },
     })
 
     return NextResponse.json(updatedMedia)

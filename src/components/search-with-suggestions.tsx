@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Search, Tag, FileVideo } from 'lucide-react'
+import { useCategories } from '@/lib/hooks/use-categories'
 
 interface Suggestion {
   type: 'media' | 'tag'
@@ -20,16 +21,6 @@ interface SearchWithSuggestionsProps {
   placeholder?: string
 }
 
-const categoryLabels: Record<string, string> = {
-  GAME: 'เกม',
-  SCIENCE: 'วิทยาศาสตร์',
-  MATH: 'คณิต',
-  THAI: 'ภาษาไทย',
-  ENGLISH: 'ภาษาอังกฤษ',
-  SOCIAL: 'สังคม',
-  OTHER: 'อื่น ๆ',
-}
-
 export function SearchWithSuggestions({
   initialValue = '',
   onSearch,
@@ -43,6 +34,7 @@ export function SearchWithSuggestions({
   const [loading, setLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const { getLabel } = useCategories()
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -174,7 +166,7 @@ export function SearchWithSuggestions({
                         <p className="text-sm font-medium truncate">{suggestion.text}</p>
                         {suggestion.category && (
                           <Badge variant="secondary" className="text-xs mt-1">
-                            {categoryLabels[suggestion.category]}
+                            {getLabel(suggestion.category)}
                           </Badge>
                         )}
                       </div>

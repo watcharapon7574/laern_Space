@@ -9,9 +9,16 @@ import { Button } from '@/components/ui/button'
 import { EmbedFrame } from '@/components/embed-frame'
 import { MediaGrid } from '@/components/media-grid'
 import { FavoriteButton } from '@/components/favorite-button'
+import { LikeButton } from '@/components/like-button'
 import { useRecentlyViewed } from '@/lib/hooks'
 import { formatNumber } from '@/lib/utils'
-import { Category } from '@prisma/client'
+
+interface CategoryInfo {
+  key: string
+  label: string
+  slug: string
+  cssClass: string
+}
 
 interface Media {
   id: string
@@ -21,21 +28,12 @@ interface Media {
   thumbnail?: string | null
   pdfDocument?: string | null
   description?: string | null
-  category: Category
+  category: CategoryInfo
   tags: string
   viewCount: number
   playCount: number
+  likeCount: number
   createdAt: string
-}
-
-const categoryLabels: Record<Category, string> = {
-  GAME: 'เกม',
-  SCIENCE: 'วิทยาศาสตร์', 
-  MATH: 'คณิต',
-  THAI: 'ภาษาไทย',
-  ENGLISH: 'ภาษาอังกฤษ',
-  SOCIAL: 'สังคม',
-  OTHER: 'อื่น ๆ',
 }
 
 interface PageProps {
@@ -58,24 +56,24 @@ export default function MediaDetailPage({ params }: PageProps) {
         const decodedSlug = decodeURIComponent(resolvedParams.slug)
         const response = await fetch(`/api/media?q=${encodeURIComponent(decodedSlug)}`)
         const data = await response.json()
-        
+
         const foundMedia = data.media?.find((m: Media) => m.slug === decodedSlug)
-        
+
         if (!foundMedia) {
           notFound()
         }
-        
+
         setMedia(foundMedia)
-        
+
         // Add to recently viewed
         addToRecentlyViewed({
           id: foundMedia.id,
           slug: foundMedia.slug,
           title: foundMedia.title,
           thumbnail: foundMedia.thumbnail,
-          category: foundMedia.category,
+          category: foundMedia.category.key,
         })
-        
+
         // Track view
         if (!hasTrackedView) {
           fetch('/api/track/view', {
@@ -85,9 +83,9 @@ export default function MediaDetailPage({ params }: PageProps) {
           }).catch(console.error)
           setHasTrackedView(true)
         }
-        
+
         // Load related media
-        const relatedResponse = await fetch(`/api/media?category=${foundMedia.category}&limit=4`)
+        const relatedResponse = await fetch(`/api/media?category=${foundMedia.category.key}&limit=4`)
         const relatedData = await relatedResponse.json()
         setRelatedMedia(relatedData.media?.filter((m: Media) => m.id !== foundMedia.id) || [])
       } catch (error) {
@@ -97,7 +95,7 @@ export default function MediaDetailPage({ params }: PageProps) {
         setLoading(false)
       }
     }
-    
+
     loadData()
   }, [params, hasTrackedView])
 
@@ -140,11 +138,11 @@ export default function MediaDetailPage({ params }: PageProps) {
         <div className="flex items-center space-x-2 text-sm text-muted-foreground">
           <Link href="/" className="hover:text-blue-600">หน้าแรก</Link>
           <span>→</span>
-          <Link 
-            href={`/categories/${media.category.toLowerCase()}`} 
+          <Link
+            href={`/categories/${media.category.slug}`}
             className="hover:text-blue-600"
           >
-            {categoryLabels[media.category]}
+            {media.category.label}
           </Link>
           <span>→</span>
           <span className="text-foreground dark:text-foreground">{media.title}</span>
@@ -164,6 +162,7 @@ export default function MediaDetailPage({ params }: PageProps) {
                 <Play className="h-4 w-4" />
                 <span>{formatNumber(media.playCount)} การเล่น</span>
               </div>
+              <LikeButton mediaId={media.id} initialLikeCount={media.likeCount} variant="icon" />
               <div className="flex items-center space-x-1">
                 <Calendar className="h-4 w-4" />
                 <span>{new Date(media.createdAt).toLocaleDateString('th-TH')}</span>
@@ -182,13 +181,18 @@ export default function MediaDetailPage({ params }: PageProps) {
                 เปิดแท็บใหม่
               </a>
             </Button>
+            <LikeButton
+              mediaId={media.id}
+              initialLikeCount={media.likeCount}
+              variant="default"
+            />
             <FavoriteButton
               media={{
                 id: media.id,
                 slug: media.slug,
                 title: media.title,
                 thumbnail: media.thumbnail,
-                category: media.category,
+                category: media.category.key,
               }}
             />
           </div>
@@ -205,14 +209,14 @@ export default function MediaDetailPage({ params }: PageProps) {
             className="min-h-[600px]"
           />
         ) : (
-          <div 
+          <div
             className="relative aspect-video bg-muted dark:bg-background flex items-center justify-center cursor-pointer group"
             onClick={handlePlay}
           >
             {media.thumbnail ? (
               <div className="relative w-full h-full">
-                <img 
-                  src={media.thumbnail} 
+                <img
+                  src={media.thumbnail}
                   alt={media.title}
                   className="w-full h-full object-cover"
                 />
@@ -252,8 +256,8 @@ export default function MediaDetailPage({ params }: PageProps) {
               <div className="flex flex-wrap gap-2">
                 {tags.map((tag: string, index: number) => (
                   <Link key={index} href={`/search?q=${encodeURIComponent(tag)}`}>
-                    <Badge 
-                      variant="secondary" 
+                    <Badge
+                      variant="secondary"
                       className="hover:bg-blue-100 hover:text-blue-800 cursor-pointer"
                     >
                       <Tag className="h-3 w-3 mr-1" />
@@ -303,7 +307,7 @@ export default function MediaDetailPage({ params }: PageProps) {
               <div>
                 <dt className="text-sm text-muted-foreground">หมวดหมู่</dt>
                 <dd className="font-medium">
-                  <Badge>{categoryLabels[media.category]}</Badge>
+                  <Badge>{media.category.label}</Badge>
                 </dd>
               </div>
               <div>
@@ -313,6 +317,10 @@ export default function MediaDetailPage({ params }: PageProps) {
               <div>
                 <dt className="text-sm text-muted-foreground">จำนวนการเล่น</dt>
                 <dd className="font-medium">{formatNumber(media.playCount)}</dd>
+              </div>
+              <div>
+                <dt className="text-sm text-muted-foreground">จำนวนถูกใจ</dt>
+                <dd className="font-medium">{formatNumber(media.likeCount)}</dd>
               </div>
               <div>
                 <dt className="text-sm text-muted-foreground">วันที่เพิ่ม</dt>

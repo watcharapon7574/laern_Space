@@ -4,32 +4,24 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { MediaGrid } from '@/components/media-grid'
 import { prisma } from '@/lib/prisma'
-import { Category } from '@prisma/client'
-
-const categoryLabels: Record<Category, string> = {
-  GAME: 'เกม',
-  SCIENCE: 'วิทยาศาสตร์',
-  MATH: 'คณิต',
-  THAI: 'ภาษาไทย',
-  ENGLISH: 'ภาษาอังกฤษ',
-  SOCIAL: 'สังคม',
-  OTHER: 'อื่น ๆ',
-}
+import { getCategoryBySlug } from '@/lib/categories'
 
 interface PageProps {
   params: Promise<{ category: string }>
 }
 
 export default async function CategoryPage({ params }: PageProps) {
-  const { category } = await params
-  const categoryKey = category.toUpperCase() as Category
+  const { category: slug } = await params
 
-  if (!Object.keys(categoryLabels).includes(categoryKey)) {
+  const categoryData = await getCategoryBySlug(slug)
+
+  if (!categoryData) {
     notFound()
   }
 
   const media = await prisma.media.findMany({
-    where: { category: categoryKey },
+    where: { categoryId: categoryData.id, status: 'APPROVED' },
+    include: { category: true },
     orderBy: [
       { viewCount: 'desc' },
       { createdAt: 'desc' },
@@ -42,21 +34,21 @@ export default async function CategoryPage({ params }: PageProps) {
         <div className="flex items-center space-x-2 text-sm text-muted-foreground">
           <Link href="/" className="hover:text-blue-600">หน้าแรก</Link>
           <span>→</span>
-          <span className="text-foreground dark:text-foreground">{categoryLabels[categoryKey]}</span>
+          <span className="text-foreground dark:text-foreground">{categoryData.label}</span>
         </div>
-        
+
         <h1 className="text-3xl font-bold text-foreground dark:text-foreground">
-          สื่อการสอน: {categoryLabels[categoryKey]}
+          สื่อการสอน: {categoryData.label}
         </h1>
-        
+
         <p className="text-muted-foreground dark:text-muted-foreground">
-          พบ {media.length} รายการใน หมวดหมู่{categoryLabels[categoryKey]}
+          พบ {media.length} รายการใน หมวดหมู่{categoryData.label}
         </p>
       </div>
 
-      <MediaGrid 
+      <MediaGrid
         media={media}
-        emptyMessage={`ไม่พบสื่อการสอนในหมวด${categoryLabels[categoryKey]}`}
+        emptyMessage={`ไม่พบสื่อการสอนในหมวด${categoryData.label}`}
       />
     </div>
   )

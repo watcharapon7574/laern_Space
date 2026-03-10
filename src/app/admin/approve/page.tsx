@@ -15,6 +15,7 @@ export default async function ApproveMediaPage() {
 
   const pendingMedia = await prisma.media.findMany({
     where: { status: MediaStatus.PENDING },
+    include: { category: true },
     orderBy: { createdAt: 'desc' },
   })
 

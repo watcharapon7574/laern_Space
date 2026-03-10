@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
     const format = searchParams.get('format') || 'csv'
 
     const media = await prisma.media.findMany({
+      include: { category: true },
       orderBy: { createdAt: 'desc' },
     })
 
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
       `"${m.title.replace(/"/g, '""')}"`,
       m.slug,
       m.url,
-      m.category,
+      m.category?.label || '',
       m.status,
       `"${m.tags.replace(/"/g, '""')}"`,
       m.viewCount.toString(),

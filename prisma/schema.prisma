@@ -8,6 +8,20 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model Category {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  label     String
+  slug      String   @unique
+  color     String   @default("#3b82f6")
+  cssClass  String   @default("tag-color-1") @map("css_class")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  media     Media[]
+
+  @@map("categories")
+}
+
 model Media {
   id          String      @id @default(cuid())
   slug        String      @unique
@@ -15,19 +29,22 @@ model Media {
   url         String
   thumbnail   String?
   description String?
-  category    Category
+  categoryId  String      @map("category_id")
+  category    Category    @relation(fields: [categoryId], references: [id])
   tags        String
   status      MediaStatus @default(PENDING)
   submittedBy String?     @map("submitted_by")
   viewCount   Int         @default(0) @map("view_count")
   playCount   Int         @default(0) @map("play_count")
+  likeCount   Int         @default(0) @map("like_count")
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
   pdfDocument String?     @map("pdf_document")
   viewEvents  ViewEvent[]
+  likes       MediaLike[]
 
   @@index([status])
-  @@index([category])
+  @@index([categoryId])
   @@map("ai_edugame")
 }
 
@@ -43,14 +60,17 @@ model ViewEvent {
   @@map("view_events")
 }
 
-enum Category {
-  GAME
-  SCIENCE
-  MATH
-  THAI
-  ENGLISH
-  SOCIAL
-  OTHER
+model MediaLike {
+  id        String   @id @default(cuid())
+  mediaId   String   @map("media_id")
+  ipHash    String   @map("ip_hash")
+  createdAt DateTime @default(now()) @map("created_at")
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaId, ipHash])
+  @@index([mediaId])
+  @@index([ipHash])
+  @@map("media_likes")
 }
 
 enum MediaStatus {

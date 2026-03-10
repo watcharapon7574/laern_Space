@@ -11,35 +11,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Loader2, X, Plus } from 'lucide-react'
-import { Category } from '@prisma/client'
 import { toast } from 'sonner'
-
-const categoryLabels: Record<Category, string> = {
-  GAME: 'เกม',
-  SCIENCE: 'วิทยาศาสตร์',
-  MATH: 'คณิต',
-  THAI: 'ภาษาไทย',
-  ENGLISH: 'ภาษาอังกฤษ',
-  SOCIAL: 'สังคม',
-  OTHER: 'อื่น ๆ',
-}
+import { useCategories } from '@/lib/hooks/use-categories'
 
 export default function AddMediaPage() {
   const router = useRouter()
   const [authenticated, setAuthenticated] = useState(false)
+  const { categories } = useCategories()
 
   const [formData, setFormData] = useState({
     url: '',
     title: '',
     description: '',
-    category: '',
+    categoryId: '',
     thumbnail: '',
   })
   const [tags, setTags] = useState<string[]>([])
   const [newTag, setNewTag] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [metadata, setMetadata] = useState<{ title?: string; description?: string; thumbnail?: string } | null>(null)
+  const [, setMetadata] = useState<{ title?: string; description?: string; thumbnail?: string } | null>(null)
   const [fetchingMetadata, setFetchingMetadata] = useState(false)
 
   useEffect(() => {
@@ -105,7 +96,6 @@ export default function AddMediaPage() {
     e.preventDefault()
     setError('')
 
-    // Client-side validation
     if (!formData.title.trim()) {
       setError('กรุณาใส่ชื่อสื่อ')
       return
@@ -116,7 +106,7 @@ export default function AddMediaPage() {
       return
     }
 
-    if (!formData.category) {
+    if (!formData.categoryId) {
       setError('กรุณาเลือกหมวดหมู่')
       return
     }
@@ -128,7 +118,11 @@ export default function AddMediaPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData,
+          title: formData.title,
+          url: formData.url,
+          description: formData.description,
+          categoryId: formData.categoryId,
+          thumbnail: formData.thumbnail,
           tags,
         }),
       })
@@ -228,23 +222,23 @@ export default function AddMediaPage() {
             <div className="space-y-2">
               <Label htmlFor="category">หมวดหมู่ *</Label>
               <Select
-                value={formData.category}
-                onValueChange={(value) => setFormData({ ...formData, category: value })}
+                value={formData.categoryId}
+                onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
                 disabled={loading}
                 required
               >
-                <SelectTrigger className={!formData.category ? "text-muted-foreground" : ""}>
+                <SelectTrigger className={!formData.categoryId ? "text-muted-foreground" : ""}>
                   <SelectValue placeholder="เลือกหมวดหมู่" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(categoryLabels).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {!formData.category && (
+              {!formData.categoryId && (
                 <p className="text-sm text-red-500">กรุณาเลือกหมวดหมู่</p>
               )}
             </div>

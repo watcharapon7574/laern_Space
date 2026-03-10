@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { createSlug } from '@/lib/utils'
 import { rateLimitMiddleware } from '@/lib/rate-limit'
-import { Category, MediaStatus } from '@prisma/client'
+import { MediaStatus } from '@prisma/client'
 
 function slugify(text: string): string {
   return text
@@ -48,12 +47,21 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { submittedBy, title, url, description, category, tags, thumbnail, pdfDocument } = body
+    const { submittedBy, title, url, description, categoryId, tags, thumbnail, pdfDocument } = body
 
     // Validate required fields
-    if (!submittedBy || !title || !url || !category) {
+    if (!submittedBy || !title || !url || !categoryId) {
       return NextResponse.json(
         { error: 'กรุณากรอกข้อมูลให้ครบถ้วน' },
+        { status: 400 }
+      )
+    }
+
+    // Validate category exists
+    const categoryExists = await prisma.category.findUnique({ where: { id: categoryId } })
+    if (!categoryExists) {
+      return NextResponse.json(
+        { error: 'หมวดหมู่ไม่ถูกต้อง' },
         { status: 400 }
       )
     }
@@ -84,11 +92,12 @@ export async function POST(request: NextRequest) {
         thumbnail: thumbnail || null,
         pdfDocument: pdfDocument || null,
         description: description || null,
-        category: category as Category,
+        categoryId,
         tags: JSON.stringify(tags || []),
         submittedBy,
         status: MediaStatus.PENDING,
       },
+      include: { category: true },
     })
 
     return NextResponse.json({

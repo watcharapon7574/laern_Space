@@ -24,8 +24,8 @@ import {
   Square,
   ExternalLink,
   Loader2,
-  Filter,
 } from 'lucide-react'
+import { useCategories } from '@/lib/hooks/use-categories'
 
 interface Media {
   id: string
@@ -34,23 +34,13 @@ interface Media {
   url: string
   thumbnail?: string | null
   description?: string | null
-  category: string
+  category: { key: string; label: string }
   tags: string
   status: string
   viewCount: number
   playCount: number
   submittedBy?: string | null
   createdAt: string
-}
-
-const categoryLabels: Record<string, string> = {
-  GAME: 'เกม',
-  SCIENCE: 'วิทยาศาสตร์',
-  MATH: 'คณิต',
-  THAI: 'ภาษาไทย',
-  ENGLISH: 'ภาษาอังกฤษ',
-  SOCIAL: 'สังคม',
-  OTHER: 'อื่น ๆ',
 }
 
 const statusLabels: Record<string, { label: string; color: string }> = {
@@ -68,6 +58,7 @@ export default function ManageMediaPage() {
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [previewMedia, setPreviewMedia] = useState<Media | null>(null)
+  const { categories, getLabel } = useCategories()
 
   useEffect(() => {
     fetchMedia()
@@ -98,7 +89,7 @@ export default function ManageMediaPage() {
       m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.tags.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus = statusFilter === 'all' || m.status === statusFilter
-    const matchesCategory = categoryFilter === 'all' || m.category === categoryFilter
+    const matchesCategory = categoryFilter === 'all' || m.category?.key === categoryFilter
     return matchesSearch && matchesStatus && matchesCategory
   })
 
@@ -166,9 +157,9 @@ export default function ManageMediaPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">ทุกหมวดหมู่</SelectItem>
-                {Object.entries(categoryLabels).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>
-                    {label}
+                {categories.map((cat) => (
+                  <SelectItem key={cat.key} value={cat.key}>
+                    {cat.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -249,7 +240,7 @@ export default function ManageMediaPage() {
                     <Badge className={statusLabels[item.status]?.color}>
                       {statusLabels[item.status]?.label}
                     </Badge>
-                    <Badge variant="outline">{categoryLabels[item.category]}</Badge>
+                    <Badge variant="outline">{item.category?.label || getLabel(item.category?.key || '')}</Badge>
                   </div>
                 </div>
 

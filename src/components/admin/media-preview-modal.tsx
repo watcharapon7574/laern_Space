@@ -21,7 +21,7 @@ interface MediaItem {
   url: string
   thumbnail?: string | null
   description?: string | null
-  category: string
+  category: { key: string; label: string }
   tags: string
   status: string
   viewCount: number
@@ -35,16 +35,6 @@ interface MediaPreviewModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onActionComplete: () => void
-}
-
-const categoryLabels: Record<string, string> = {
-  GAME: 'เกม',
-  SCIENCE: 'วิทยาศาสตร์',
-  MATH: 'คณิต',
-  THAI: 'ภาษาไทย',
-  ENGLISH: 'ภาษาอังกฤษ',
-  SOCIAL: 'สังคม',
-  OTHER: 'อื่น ๆ',
 }
 
 const statusLabels: Record<string, { label: string; color: string }> = {
@@ -108,7 +98,7 @@ export function MediaPreviewModal({
             <Badge className={statusLabels[media.status]?.color}>
               {statusLabels[media.status]?.label}
             </Badge>
-            <Badge variant="outline">{categoryLabels[media.category]}</Badge>
+            <Badge variant="outline">{media.category?.label || ''}</Badge>
           </DialogDescription>
         </DialogHeader>
 

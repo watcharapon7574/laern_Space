@@ -7,13 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatNumber } from '@/lib/utils'
-import { Eye, Play, FileVideo, TrendingUp, BarChart3, Settings, CheckCircle, Plus } from 'lucide-react'
+import { Eye, Play, FileVideo, TrendingUp, BarChart3, Settings, CheckCircle, Plus, Tag } from 'lucide-react'
+import { useCategories } from '@/lib/hooks/use-categories'
 
 interface MediaItem {
   title: string
   viewCount: number
   playCount: number
-  category: string
+  category: { key: string; label: string }
 }
 
 interface Stats {
@@ -24,21 +25,12 @@ interface Stats {
   categoryCounts: Record<string, number>
 }
 
-const categoryLabels: Record<string, string> = {
-  GAME: 'เกม',
-  SCIENCE: 'วิทยาศาสตร์',
-  MATH: 'คณิต',
-  THAI: 'ภาษาไทย',
-  ENGLISH: 'ภาษาอังกฤษ',
-  SOCIAL: 'สังคม',
-  OTHER: 'อื่น ๆ',
-}
-
 export default function AdminDashboard() {
   const router = useRouter()
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
   const [authenticated, setAuthenticated] = useState(false)
+  const { getLabel } = useCategories()
 
   useEffect(() => {
     checkAuth()
@@ -72,7 +64,8 @@ export default function AdminDashboard() {
         .slice(0, 10)
 
       const categoryCounts = media.reduce((acc: Record<string, number>, item: MediaItem) => {
-        acc[item.category] = (acc[item.category] || 0) + 1
+        const key = item.category?.key || 'OTHER'
+        acc[key] = (acc[key] || 0) + 1
         return acc
       }, {})
 
@@ -121,6 +114,12 @@ export default function AdminDashboard() {
             <Link href="/admin/manage">
               <Settings className="h-4 w-4 mr-2" />
               จัดการสื่อ
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/admin/categories">
+              <Tag className="h-4 w-4 mr-2" />
+              หมวดหมู่
             </Link>
           </Button>
           <Button asChild variant="outline">
@@ -206,7 +205,7 @@ export default function AdminDashboard() {
                         </p>
                         <div className="flex items-center space-x-2 mt-1">
                           <Badge variant="outline" className="text-xs">
-                            {categoryLabels[media.category]}
+                            {media.category?.label || getLabel(media.category?.key || '')}
                           </Badge>
                         </div>
                       </div>
@@ -237,7 +236,7 @@ export default function AdminDashboard() {
                   {Object.entries(stats.categoryCounts).map(([category, count]) => (
                     <div key={category} className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <Badge>{categoryLabels[category] || category}</Badge>
+                        <Badge>{getLabel(category)}</Badge>
                       </div>
                       <div className="text-sm font-medium">
                         {count} รายการ

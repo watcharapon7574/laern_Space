@@ -14,7 +14,7 @@ async function testSupabaseDB() {
       popular.forEach((item, index) => {
         console.log(`\n${index + 1}. ${item.title}`)
         console.log(`   - ID: ${item.id}`)
-        console.log(`   - Category: ${item.category}`)
+        console.log(`   - Category: ${item.categories?.label || item.category_id}`)
         console.log(`   - Status: ${item.status}`)
         console.log(`   - Views: ${item.view_count}`)
       })
