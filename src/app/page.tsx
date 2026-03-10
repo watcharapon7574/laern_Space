@@ -113,12 +113,12 @@ export default async function HomePage() {
       {/* Categories */}
       <section>
         <h2 className="text-2xl font-bold mb-6">หมวดหมู่สื่อการสอน</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+        <div className="flex flex-wrap gap-3">
           {categories.map((cat) => (
             <Link
               key={cat.id}
               href={`/categories/${cat.slug}`}
-              className={`px-4 py-2 ${cat.cssClass} rounded-xl border transition-all duration-300 text-center hover:scale-105 hover:shadow-lg hover:-translate-y-1`}
+              className={`px-5 py-2 ${cat.cssClass} rounded-xl border transition-all duration-300 text-center hover:scale-105 hover:shadow-lg hover:-translate-y-1 whitespace-nowrap`}
             >
               <div className="text-lg font-semibold">
                 {cat.label}
