@@ -14,9 +14,11 @@ interface Media {
   id: string
   slug: string
   title: string
-  url: string
+  url?: string | null
   thumbnail?: string | null
   description?: string | null
+  pdfDocument?: string | null
+  mediaType?: string
   category: CategoryInfo
   tags: string
   viewCount: number
@@ -149,7 +151,9 @@ export function InfiniteMediaGrid({
             viewCount={item.viewCount}
             playCount={item.playCount}
             likeCount={item.likeCount}
-            createdAt={new Date(item.createdAt)}
+            createdAt={item.createdAt}
+            mediaType={item.mediaType}
+            pdfDocument={item.pdfDocument}
           />
         ))}
       </div>

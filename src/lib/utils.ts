@@ -48,6 +48,22 @@ export function formatNumber(num: number): string {
   return num.toString()
 }
 
+export function isValidUrl(url: string): boolean {
+  try {
+    new URL(url)
+    return true
+  } catch {
+    return false
+  }
+}
+
+export function extractYouTubeId(url: string): string | null {
+  const match = url.match(
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/
+  )
+  return match ? match[1] : null
+}
+
 export async function fetchMetadata(url: string) {
   try {
     const response = await fetch(url, {

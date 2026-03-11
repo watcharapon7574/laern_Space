@@ -47,10 +47,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { submittedBy, title, url, description, categoryId, tags, thumbnail, pdfDocument } = body
+    const { submittedBy, title, url, description, categoryId, tags, thumbnail, pdfDocument, mediaType, videoUrl } = body
+
+    const type = mediaType === 'GENERAL' ? 'GENERAL' : 'ONLINE'
 
     // Validate required fields
-    if (!submittedBy || !title || !url || !categoryId) {
+    if (!submittedBy || !title || !categoryId) {
       return NextResponse.json(
         { error: 'กรุณากรอกข้อมูลให้ครบถ้วน' },
         { status: 400 }
@@ -66,12 +68,37 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate domain
-    if (!isAllowedDomain(url)) {
-      return NextResponse.json(
-        { error: 'URL ไม่อยู่ในรายการที่อนุญาต (loveable.dev, lovable.app เท่านั้น)' },
-        { status: 400 }
-      )
+    // Conditional validation by media type
+    if (type === 'ONLINE') {
+      if (!url) {
+        return NextResponse.json(
+          { error: 'กรุณากรอก URL สื่อ' },
+          { status: 400 }
+        )
+      }
+      if (!isAllowedDomain(url)) {
+        return NextResponse.json(
+          { error: 'URL ไม่อยู่ในรายการที่อนุญาต (loveable.dev, lovable.app เท่านั้น)' },
+          { status: 400 }
+        )
+      }
+    } else {
+      // GENERAL: PDF required
+      if (!pdfDocument) {
+        return NextResponse.json(
+          { error: 'กรุณาอัพโหลดเอกสาร PDF' },
+          { status: 400 }
+        )
+      }
+      // Validate videoUrl format if provided
+      if (videoUrl) {
+        try { new URL(videoUrl) } catch {
+          return NextResponse.json(
+            { error: 'URL คลิปการสอนไม่ถูกต้อง' },
+            { status: 400 }
+          )
+        }
+      }
     }
 
     // Create slug
@@ -88,7 +115,9 @@ export async function POST(request: NextRequest) {
       data: {
         slug,
         title,
-        url,
+        mediaType: type,
+        url: type === 'ONLINE' ? url : null,
+        videoUrl: type === 'GENERAL' ? (videoUrl || null) : null,
         thumbnail: thumbnail || null,
         pdfDocument: pdfDocument || null,
         description: description || null,

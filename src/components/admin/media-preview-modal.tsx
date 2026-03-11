@@ -18,9 +18,12 @@ interface MediaItem {
   id: string
   title: string
   slug: string
-  url: string
+  url?: string | null
   thumbnail?: string | null
   description?: string | null
+  pdfDocument?: string | null
+  videoUrl?: string | null
+  mediaType?: string
   category: { key: string; label: string }
   tags: string
   status: string
@@ -105,7 +108,7 @@ export function MediaPreviewModal({
         <div className="space-y-4">
           {/* Preview Area */}
           <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
-            {showIframe ? (
+            {showIframe && media.url ? (
               <iframe
                 src={media.url}
                 className="w-full h-full border-0"
@@ -144,16 +147,20 @@ export function MediaPreviewModal({
           {/* Info */}
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-muted-foreground">URL</p>
-              <a
-                href={media.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:underline flex items-center gap-1"
-              >
-                <span className="truncate">{media.url}</span>
-                <ExternalLink className="h-3 w-3 flex-shrink-0" />
-              </a>
+              <p className="text-muted-foreground">{media.mediaType === 'GENERAL' ? 'เอกสาร' : 'URL'}</p>
+              {(media.url || media.pdfDocument) ? (
+                <a
+                  href={media.url || media.pdfDocument || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline flex items-center gap-1"
+                >
+                  <span className="truncate">{media.url || media.pdfDocument}</span>
+                  <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                </a>
+              ) : (
+                <p className="text-muted-foreground">-</p>
+              )}
             </div>
             <div>
               <p className="text-muted-foreground">ผู้ส่ง</p>

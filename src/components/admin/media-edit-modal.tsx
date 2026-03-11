@@ -26,9 +26,12 @@ interface MediaItem {
   id: string
   title: string
   slug: string
-  url: string
+  url?: string | null
   thumbnail?: string | null
   description?: string | null
+  videoUrl?: string | null
+  pdfDocument?: string | null
+  mediaType?: string
   category: { key: string; label: string }
   tags: string
   status: string
@@ -53,6 +56,8 @@ export function MediaEditModal({
 }: MediaEditModalProps) {
   const [title, setTitle] = useState('')
   const [url, setUrl] = useState('')
+  const [videoUrl, setVideoUrl] = useState('')
+  const [pdfDocument, setPdfDocument] = useState('')
   const [description, setDescription] = useState('')
   const [categoryId, setCategoryId] = useState('')
   const [tags, setTags] = useState('')
@@ -60,10 +65,14 @@ export function MediaEditModal({
   const [saving, setSaving] = useState(false)
   const { categories } = useCategories()
 
+  const isGeneral = media?.mediaType === 'GENERAL'
+
   useEffect(() => {
     if (media && open) {
       setTitle(media.title)
-      setUrl(media.url)
+      setUrl(media.url || '')
+      setVideoUrl(media.videoUrl || '')
+      setPdfDocument(media.pdfDocument || '')
       setDescription(media.description || '')
       setTags((() => {
         try {
@@ -74,7 +83,6 @@ export function MediaEditModal({
         }
       })())
       setThumbnail(media.thumbnail || '')
-      // Find category ID from key
       const cat = categories.find((c) => c.key === media.category?.key)
       setCategoryId(cat?.id || '')
     }
@@ -83,8 +91,12 @@ export function MediaEditModal({
   if (!media) return null
 
   const handleSave = async () => {
-    if (!title.trim() || !url.trim()) {
-      toast.error('กรุณากรอกชื่อและ URL')
+    if (!title.trim()) {
+      toast.error('กรุณากรอกชื่อสื่อ')
+      return
+    }
+    if (!isGeneral && !url.trim()) {
+      toast.error('กรุณากรอก URL')
       return
     }
 
@@ -97,10 +109,12 @@ export function MediaEditModal({
 
       const body: Record<string, unknown> = {
         title: title.trim(),
-        url: url.trim(),
+        url: url.trim() || null,
         description: description.trim() || null,
         tags: tagsArray,
         thumbnail: thumbnail.trim() || null,
+        videoUrl: videoUrl.trim() || null,
+        pdfDocument: pdfDocument.trim() || null,
       }
       if (categoryId) body.categoryId = categoryId
 
@@ -142,14 +156,38 @@ export function MediaEditModal({
             />
           </div>
 
-          <div>
-            <Label htmlFor="edit-url">URL *</Label>
-            <Input
-              id="edit-url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-            />
-          </div>
+          {!isGeneral && (
+            <div>
+              <Label htmlFor="edit-url">URL *</Label>
+              <Input
+                id="edit-url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+              />
+            </div>
+          )}
+
+          {isGeneral && (
+            <>
+              <div>
+                <Label htmlFor="edit-video-url">URL คลิปการสอน</Label>
+                <Input
+                  id="edit-video-url"
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                  placeholder="https://youtube.com/watch?v=..."
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-pdf">URL เอกสาร PDF</Label>
+                <Input
+                  id="edit-pdf"
+                  value={pdfDocument}
+                  onChange={(e) => setPdfDocument(e.target.value)}
+                />
+              </div>
+            </>
+          )}
 
           <div>
             <Label htmlFor="edit-desc">คำอธิบาย</Label>

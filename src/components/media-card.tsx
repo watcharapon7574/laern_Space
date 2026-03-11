@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { Play, Eye, ExternalLink } from 'lucide-react'
+import { Play, Eye, ExternalLink, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FavoriteButton } from '@/components/favorite-button'
 import { LikeButton } from '@/components/like-button'
@@ -19,7 +19,7 @@ interface MediaCardProps {
   id: string
   slug: string
   title: string
-  url: string
+  url?: string | null
   thumbnail?: string | null
   description?: string | null
   category: CategoryInfo
@@ -27,7 +27,9 @@ interface MediaCardProps {
   viewCount: number
   playCount: number
   likeCount: number
-  createdAt: Date | string
+  createdAt: string
+  mediaType?: string
+  pdfDocument?: string | null
 }
 
 export function MediaCard({
@@ -42,7 +44,10 @@ export function MediaCard({
   viewCount,
   playCount,
   likeCount,
+  mediaType,
+  pdfDocument,
 }: MediaCardProps) {
+  const isGeneral = mediaType === 'GENERAL'
   const parsedTags = Array.isArray(tags) ? tags : JSON.parse(tags || '[]')
 
   return (
@@ -61,7 +66,11 @@ export function MediaCard({
             />
           ) : (
             <div className="flex items-center justify-center h-full">
-              <Play className="h-12 w-12 text-gray-400" />
+              {isGeneral ? (
+                <FileText className="h-12 w-12 text-gray-400" />
+              ) : (
+                <Play className="h-12 w-12 text-gray-400" />
+              )}
             </div>
           )}
 
@@ -125,15 +134,30 @@ export function MediaCard({
         <div className="flex space-x-2">
           <Button asChild size="sm">
             <Link href={`/media/${slug}`}>
-              <Play className="h-4 w-4 mr-1" />
-              เล่น
+              {isGeneral ? (
+                <><FileText className="h-4 w-4 mr-1" />ดู</>
+              ) : (
+                <><Play className="h-4 w-4 mr-1" />เล่น</>
+              )}
             </Link>
           </Button>
-          <Button asChild size="sm" variant="outline">
-            <a href={url} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4" />
-            </a>
-          </Button>
+          {isGeneral ? (
+            pdfDocument && (
+              <Button asChild size="sm" variant="outline">
+                <a href={pdfDocument} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </Button>
+            )
+          ) : (
+            url && (
+              <Button asChild size="sm" variant="outline">
+                <a href={url} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </Button>
+            )
+          )}
         </div>
       </div>
     </div>

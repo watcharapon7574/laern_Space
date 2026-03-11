@@ -26,7 +26,9 @@ model Media {
   id          String      @id @default(cuid())
   slug        String      @unique
   title       String
-  url         String
+  mediaType   MediaType   @default(ONLINE) @map("media_type")
+  url         String?
+  videoUrl    String?     @map("video_url")
   thumbnail   String?
   description String?
   categoryId  String      @map("category_id")
@@ -71,6 +73,11 @@ model MediaLike {
   @@index([mediaId])
   @@index([ipHash])
   @@map("media_likes")
+}
+
+enum MediaType {
+  ONLINE
+  GENERAL
 }
 
 enum MediaStatus {

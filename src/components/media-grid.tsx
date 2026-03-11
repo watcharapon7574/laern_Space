@@ -10,9 +10,11 @@ interface Media {
   id: string
   slug: string
   title: string
-  url: string
+  url?: string | null
   thumbnail?: string | null
   description?: string | null
+  pdfDocument?: string | null
+  mediaType?: string
   category: CategoryInfo
   tags: string
   viewCount: number
@@ -51,7 +53,9 @@ export function MediaGrid({ media, emptyMessage = 'ไม่พบสื่อ�
           viewCount={item.viewCount}
           playCount={item.playCount}
           likeCount={item.likeCount}
-          createdAt={item.createdAt}
+          createdAt={item.createdAt instanceof Date ? item.createdAt.toISOString() : item.createdAt}
+          mediaType={item.mediaType}
+          pdfDocument={item.pdfDocument}
         />
       ))}
     </div>

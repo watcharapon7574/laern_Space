@@ -10,13 +10,17 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, CheckCircle2, Home, Upload, X, ImageIcon } from 'lucide-react'
+import { Loader2, CheckCircle2, Home, X, ImageIcon, Globe, BookOpen, ArrowLeft } from 'lucide-react'
 import { useCategories } from '@/lib/hooks/use-categories'
 
+type MediaTypeChoice = 'ONLINE' | 'GENERAL' | null
+
 export default function SubmitMediaPage() {
+  const [mediaType, setMediaType] = useState<MediaTypeChoice>(null)
   const [submittedBy, setSubmittedBy] = useState('')
   const [title, setTitle] = useState('')
   const [url, setUrl] = useState('')
+  const [videoUrl, setVideoUrl] = useState('')
   const [description, setDescription] = useState('')
   const [categoryId, setCategoryId] = useState('')
   const [tags, setTags] = useState('')
@@ -119,6 +123,11 @@ export default function SubmitMediaPage() {
       return
     }
 
+    if (mediaType === 'GENERAL' && !pdfDocument) {
+      setError('กรุณาอัพโหลดเอกสาร PDF')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -128,7 +137,9 @@ export default function SubmitMediaPage() {
         body: JSON.stringify({
           submittedBy,
           title,
-          url,
+          mediaType,
+          url: mediaType === 'ONLINE' ? url : undefined,
+          videoUrl: mediaType === 'GENERAL' ? videoUrl || undefined : undefined,
           description,
           categoryId,
           tags: tags.split(',').map(t => t.trim()).filter(Boolean),
@@ -150,12 +161,14 @@ export default function SubmitMediaPage() {
         setSubmittedBy('')
         setTitle('')
         setUrl('')
+        setVideoUrl('')
         setDescription('')
         setTags('')
         setThumbnail(null)
         setThumbnailPreview(null)
         setPdfDocument(null)
         setPdfFileName(null)
+        setMediaType(null)
         setSuccess(false)
       }, 3000)
     } catch (error) {
@@ -192,11 +205,70 @@ export default function SubmitMediaPage() {
     )
   }
 
+  // Step 1: Choose media type
+  if (!mediaType) {
+    return (
+      <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mx-auto space-y-6">
+          <div className="text-center space-y-2">
+            <h1 className="text-2xl font-bold">เลือกประเภทสื่อ</h1>
+            <p className="text-muted-foreground">กรุณาเลือกประเภทของสื่อที่คุณต้องการส่ง</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Card
+              className="cursor-pointer hover:border-primary hover:shadow-lg transition-all"
+              onClick={() => setMediaType('ONLINE')}
+            >
+              <CardContent className="pt-6 text-center space-y-3">
+                <Globe className="h-12 w-12 mx-auto text-blue-500" />
+                <h3 className="font-semibold text-lg">สื่อออนไลน์</h3>
+                <p className="text-sm text-muted-foreground">
+                  สื่อจากเว็บไซต์ เช่น loveable.dev, lovable.app
+                </p>
+              </CardContent>
+            </Card>
+            <Card
+              className="cursor-pointer hover:border-primary hover:shadow-lg transition-all"
+              onClick={() => setMediaType('GENERAL')}
+            >
+              <CardContent className="pt-6 text-center space-y-3">
+                <BookOpen className="h-12 w-12 mx-auto text-green-500" />
+                <h3 className="font-semibold text-lg">สื่อทั่วไป</h3>
+                <p className="text-sm text-muted-foreground">
+                  สื่อการสอนทั่วไป เช่น สื่อทำมือ เอกสาร PDF คลิปการสอน
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="text-center">
+            <Button variant="outline" asChild>
+              <Link href="/">ยกเลิก</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Step 2: Form
   return (
     <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         <Card>
           <CardHeader>
+            <div className="flex items-center gap-2 mb-2">
+              <Button variant="ghost" size="sm" onClick={() => setMediaType(null)}>
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                เปลี่ยนประเภท
+              </Button>
+              <span className={`text-xs px-2 py-1 rounded-md font-medium ${
+                mediaType === 'ONLINE'
+                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                  : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+              }`}>
+                {mediaType === 'ONLINE' ? 'สื่อออนไลน์' : 'สื่อทั่วไป'}
+              </span>
+            </div>
             <CardTitle className="text-2xl">ส่งสื่อการสอน</CardTitle>
             <CardDescription>
               กรอกข้อมูลสื่อการสอนของคุณ และรอผู้ดูแลตรวจสอบอนุมัติ
@@ -236,21 +308,40 @@ export default function SubmitMediaPage() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="url">URL สื่อ *</Label>
-                <Input
-                  id="url"
-                  type="url"
-                  placeholder="https://loveable.dev/projects/..."
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  required
-                  disabled={loading}
-                />
-                <p className="text-xs text-muted-foreground">
-                  ใส่ URL จาก loveable.dev หรือ lovable.app
-                </p>
-              </div>
+              {mediaType === 'ONLINE' && (
+                <div className="space-y-2">
+                  <Label htmlFor="url">URL สื่อ *</Label>
+                  <Input
+                    id="url"
+                    type="url"
+                    placeholder="https://loveable.dev/projects/..."
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    ใส่ URL จาก loveable.dev หรือ lovable.app
+                  </p>
+                </div>
+              )}
+
+              {mediaType === 'GENERAL' && (
+                <div className="space-y-2">
+                  <Label htmlFor="videoUrl">URL คลิปการสอน (ถ้ามี)</Label>
+                  <Input
+                    id="videoUrl"
+                    type="url"
+                    placeholder="https://youtube.com/watch?v=..."
+                    value={videoUrl}
+                    onChange={(e) => setVideoUrl(e.target.value)}
+                    disabled={loading}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    ลิงก์วิดีโอสาธิตวิธีใช้สื่อ (YouTube, Google Drive ฯลฯ)
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="description">คำอธิบาย</Label>
@@ -325,7 +416,9 @@ export default function SubmitMediaPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="pdfDocument">เอกสารแนบ (PDF)</Label>
+                <Label htmlFor="pdfDocument">
+                  {mediaType === 'GENERAL' ? 'เอกสาร PDF *' : 'เอกสารแนบ (PDF)'}
+                </Label>
                 {pdfDocument ? (
                   <div className="flex items-center justify-between p-3 border border-border rounded-lg bg-muted/50">
                     <div className="flex items-center space-x-2">

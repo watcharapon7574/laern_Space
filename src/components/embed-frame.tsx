@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { ExternalLink, AlertTriangle, Maximize2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -50,10 +51,12 @@ export function EmbedFrame({ url, title, thumbnail, className = '' }: EmbedFrame
     <div className={`relative aspect-video rounded-lg overflow-hidden ${className}`}>
       {/* Background: thumbnail or gradient */}
       {thumbnail ? (
-        <img 
-          src={thumbnail} 
+        <Image
+          src={thumbnail}
           alt={title}
-          className="absolute inset-0 w-full h-full object-cover"
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, 80vw"
         />
       ) : (
         <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-indigo-800" />

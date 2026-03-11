@@ -26,6 +26,7 @@ import {
   Loader2,
   Trash2,
   Pencil,
+  FileText,
 } from 'lucide-react'
 import { useCategories } from '@/lib/hooks/use-categories'
 
@@ -33,9 +34,12 @@ interface Media {
   id: string
   slug: string
   title: string
-  url: string
+  url?: string | null
   thumbnail?: string | null
   description?: string | null
+  videoUrl?: string | null
+  pdfDocument?: string | null
+  mediaType?: string
   category: { key: string; label: string }
   tags: string
   status: string
@@ -58,6 +62,7 @@ export default function ManageMediaPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [categoryFilter, setCategoryFilter] = useState('all')
+  const [mediaTypeFilter, setMediaTypeFilter] = useState('all')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [previewMedia, setPreviewMedia] = useState<Media | null>(null)
   const [editMedia, setEditMedia] = useState<Media | null>(null)
@@ -109,7 +114,8 @@ export default function ManageMediaPage() {
       m.tags.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus = statusFilter === 'all' || m.status === statusFilter
     const matchesCategory = categoryFilter === 'all' || m.category?.key === categoryFilter
-    return matchesSearch && matchesStatus && matchesCategory
+    const matchesMediaType = mediaTypeFilter === 'all' || m.mediaType === mediaTypeFilter
+    return matchesSearch && matchesStatus && matchesCategory && matchesMediaType
   })
 
   const toggleSelect = (id: string) => {
@@ -181,6 +187,16 @@ export default function ManageMediaPage() {
                     {cat.label}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+            <Select value={mediaTypeFilter} onValueChange={setMediaTypeFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="ประเภทสื่อ" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">ทุกประเภท</SelectItem>
+                <SelectItem value="ONLINE">สื่อออนไลน์</SelectItem>
+                <SelectItem value="GENERAL">สื่อทั่วไป</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -260,6 +276,9 @@ export default function ManageMediaPage() {
                       {statusLabels[item.status]?.label}
                     </Badge>
                     <Badge variant="outline">{item.category?.label || getLabel(item.category?.key || '')}</Badge>
+                    {item.mediaType === 'GENERAL' && (
+                      <Badge variant="secondary">สื่อทั่วไป</Badge>
+                    )}
                   </div>
                 </div>
 
@@ -300,10 +319,15 @@ export default function ManageMediaPage() {
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation()
-                      window.open(item.url, '_blank')
+                      const link = item.mediaType === 'GENERAL' ? item.pdfDocument : item.url
+                      if (link) window.open(link, '_blank')
                     }}
                   >
-                    <ExternalLink className="h-4 w-4" />
+                    {item.mediaType === 'GENERAL' ? (
+                      <FileText className="h-4 w-4" />
+                    ) : (
+                      <ExternalLink className="h-4 w-4" />
+                    )}
                   </Button>
                   <Button
                     variant="outline"

@@ -12,10 +12,18 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category')
     const tag = searchParams.get('tag')
     const q = searchParams.get('q')
+    const mediaType = searchParams.get('mediaType')
+    const includeAll = searchParams.get('includeAll')
     const skip = (page - 1) * limit
 
-    const where: Prisma.MediaWhereInput = {
-      status: MediaStatus.APPROVED,
+    const where: Prisma.MediaWhereInput = {}
+
+    if (!includeAll) {
+      where.status = MediaStatus.APPROVED
+    }
+
+    if (mediaType === 'ONLINE' || mediaType === 'GENERAL') {
+      where.mediaType = mediaType
     }
 
     if (category) {

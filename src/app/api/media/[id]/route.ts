@@ -45,7 +45,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     const { id } = await context.params
     const body = await request.json()
-    const { title, url, description, categoryId, tags, thumbnail } = body
+    const { title, url, description, categoryId, tags, thumbnail, videoUrl, pdfDocument } = body
 
     const existingMedia = await prisma.media.findUnique({
       where: { id },
@@ -80,14 +80,14 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       updates.slug = newSlug
     }
 
-    if (url) {
-      if (!isAllowedDomain(url)) {
+    if (url !== undefined) {
+      if (url && existingMedia.mediaType === 'ONLINE' && !isAllowedDomain(url)) {
         return NextResponse.json(
           { error: 'Domain not allowed' },
           { status: 400 }
         )
       }
-      updates.url = url
+      updates.url = url || null
     }
 
     if (description !== undefined) {
@@ -111,6 +111,14 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     if (thumbnail !== undefined) {
       updates.thumbnail = thumbnail || null
+    }
+
+    if (videoUrl !== undefined) {
+      updates.videoUrl = videoUrl || null
+    }
+
+    if (pdfDocument !== undefined) {
+      updates.pdfDocument = pdfDocument || null
     }
 
     if (Object.keys(updates).length === 0) {

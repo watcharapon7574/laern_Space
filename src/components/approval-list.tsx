@@ -14,9 +14,11 @@ interface MediaWithCategory {
   id: string
   slug: string
   title: string
-  url: string
+  url: string | null
   thumbnail: string | null
   description: string | null
+  mediaType?: string
+  videoUrl?: string | null
   category: { key: string; label: string }
   tags: string
   status: string
@@ -106,15 +108,27 @@ export function ApprovalList({ initialMedia }: ApprovalListProps) {
                   <span className="font-medium">ผู้จัดทำ:</span>{' '}
                   {item.submittedBy || 'ไม่ระบุ'}
                 </p>
-                <Link
-                  href={item.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-primary hover:underline"
-                >
-                  <span>ดู URL</span>
-                  <ExternalLink className="h-3 w-3" />
-                </Link>
+                {item.url ? (
+                  <Link
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-primary hover:underline"
+                  >
+                    <span>ดู URL</span>
+                    <ExternalLink className="h-3 w-3" />
+                  </Link>
+                ) : item.pdfDocument ? (
+                  <Link
+                    href={item.pdfDocument}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-primary hover:underline"
+                  >
+                    <span>ดู PDF</span>
+                    <ExternalLink className="h-3 w-3" />
+                  </Link>
+                ) : null}
               </div>
             </CardContent>
 
