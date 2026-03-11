@@ -20,10 +20,19 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
 
   const setValue = (value: T | ((prev: T) => T)) => {
     try {
-      const valueToStore = value instanceof Function ? value(storedValue) : value
-      setStoredValue(valueToStore)
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(key, JSON.stringify(valueToStore))
+      if (value instanceof Function) {
+        setStoredValue((currentValue) => {
+          const newValue = value(currentValue)
+          if (typeof window !== 'undefined') {
+            window.localStorage.setItem(key, JSON.stringify(newValue))
+          }
+          return newValue
+        })
+      } else {
+        setStoredValue(value)
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem(key, JSON.stringify(value))
+        }
       }
     } catch (error) {
       console.error('Error setting localStorage:', error)
