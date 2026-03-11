@@ -32,7 +32,7 @@ model Media {
   thumbnail   String?
   description String?
   categoryId  String      @map("category_id")
-  category    Category    @relation(fields: [categoryId], references: [id])
+  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   tags        String
   status      MediaStatus @default(PENDING)
   submittedBy String?     @map("submitted_by")

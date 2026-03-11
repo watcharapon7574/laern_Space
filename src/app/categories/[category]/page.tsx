@@ -11,7 +11,8 @@ interface PageProps {
 }
 
 export default async function CategoryPage({ params }: PageProps) {
-  const { category: slug } = await params
+  const { category: rawSlug } = await params
+  const slug = decodeURIComponent(rawSlug)
 
   const categoryData = await getCategoryBySlug(slug)
 

@@ -125,10 +125,12 @@ export function MediaCard({
             <Eye className="h-3.5 w-3.5" />
             <span>{formatNumber(viewCount)}</span>
           </div>
-          <div className="flex items-center space-x-1">
-            <Play className="h-3.5 w-3.5" />
-            <span>{formatNumber(playCount)}</span>
-          </div>
+          {!isGeneral && (
+            <div className="flex items-center space-x-1">
+              <Play className="h-3.5 w-3.5" />
+              <span>{formatNumber(playCount)}</span>
+            </div>
+          )}
         </div>
 
         <div className="flex space-x-2">

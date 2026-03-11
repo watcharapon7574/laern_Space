@@ -47,7 +47,7 @@ export function MediaDetailClient({ media, relatedMedia }: MediaDetailClientProp
   const isGeneral = media.mediaType === 'GENERAL'
   const [isPlaying, setIsPlaying] = useState(!isGeneral)
   const [hasTrackedView, setHasTrackedView] = useState(false)
-  const [hasTrackedPlay, setHasTrackedPlay] = useState(false)
+  const [hasTrackedPlay, setHasTrackedPlay] = useState(isGeneral)
   const { addToRecentlyViewed } = useRecentlyViewed()
 
   const youtubeId = media.videoUrl ? extractYouTubeId(media.videoUrl) : null
@@ -115,10 +115,12 @@ export function MediaDetailClient({ media, relatedMedia }: MediaDetailClientProp
                 <Eye className="h-4 w-4" />
                 <span>{formatNumber(media.viewCount)} การดู</span>
               </div>
-              <div className="flex items-center space-x-1">
-                <Play className="h-4 w-4" />
-                <span>{formatNumber(media.playCount)} การเล่น</span>
-              </div>
+              {!isGeneral && (
+                <div className="flex items-center space-x-1">
+                  <Play className="h-4 w-4" />
+                  <span>{formatNumber(media.playCount)} การเล่น</span>
+                </div>
+              )}
               <LikeButton mediaId={media.id} initialLikeCount={media.likeCount} variant="icon" />
               <div className="flex items-center space-x-1">
                 <Calendar className="h-4 w-4" />
@@ -363,10 +365,12 @@ export function MediaDetailClient({ media, relatedMedia }: MediaDetailClientProp
                 <dt className="text-sm text-muted-foreground">จำนวนการดู</dt>
                 <dd className="font-medium">{formatNumber(media.viewCount)}</dd>
               </div>
-              <div>
-                <dt className="text-sm text-muted-foreground">จำนวนการเล่น</dt>
-                <dd className="font-medium">{formatNumber(media.playCount)}</dd>
-              </div>
+              {!isGeneral && (
+                <div>
+                  <dt className="text-sm text-muted-foreground">จำนวนการเล่น</dt>
+                  <dd className="font-medium">{formatNumber(media.playCount)}</dd>
+                </div>
+              )}
               <div>
                 <dt className="text-sm text-muted-foreground">จำนวนถูกใจ</dt>
                 <dd className="font-medium">{formatNumber(media.likeCount)}</dd>
