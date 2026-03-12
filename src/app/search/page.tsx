@@ -57,10 +57,10 @@ function SearchContent() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-foreground dark:text-foreground mb-2">
-          ค้นหาสื่อการสอน
+          {urlQuery || urlCategory ? 'ค้นหาสื่อการสอน' : 'สื่อการสอนทั้งหมด'}
         </h1>
         <p className="text-muted-foreground dark:text-muted-foreground">
-          ค้นพบสื่อการสอนที่คุณต้องการ
+          {urlQuery || urlCategory ? 'ค้นพบสื่อการสอนที่คุณต้องการ' : 'เรียกดูสื่อการสอนทั้งหมดในระบบ'}
         </p>
       </div>
 
@@ -136,7 +136,7 @@ function SearchContent() {
         emptyMessage={
           urlQuery || urlCategory
             ? 'ไม่พบสื่อการสอนที่ตรงกับเงื่อนไขการค้นหา'
-            : 'กรุณาใส่คำค้นหาหรือเลือกหมวดหมู่เพื่อค้นหาสื่อ'
+            : 'ยังไม่มีสื่อการสอนในระบบ'
         }
       />
     </div>
