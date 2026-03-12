@@ -25,6 +25,7 @@ interface Media {
   playCount: number
   likeCount: number
   createdAt: string
+  submittedBy?: string | null
 }
 
 interface InfiniteMediaGridProps {
@@ -49,9 +50,16 @@ export function InfiniteMediaGrid({
   const [initialLoading, setInitialLoading] = useState(initialMedia.length === 0)
   const observerRef = useRef<IntersectionObserver | null>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   const fetchMedia = useCallback(async (pageNum: number, reset: boolean = false) => {
-    if (loading) return
+    // Cancel any ongoing fetch
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+
+    const controller = new AbortController()
+    abortControllerRef.current = controller
 
     setLoading(true)
     try {
@@ -62,7 +70,9 @@ export function InfiniteMediaGrid({
       if (query) params.append('q', query)
       if (tag) params.append('tag', tag)
 
-      const response = await fetch(`/api/media?${params.toString()}`)
+      const response = await fetch(`/api/media?${params.toString()}`, {
+        signal: controller.signal,
+      })
       const data = await response.json()
 
       const newMedia = data.media || []
@@ -75,13 +85,17 @@ export function InfiniteMediaGrid({
       }
 
       setHasMore(pageNum < pagination.pages)
-    } catch (error) {
-      console.error('Error fetching media:', error)
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name !== 'AbortError') {
+        console.error('Error fetching media:', error)
+      }
     } finally {
-      setLoading(false)
-      setInitialLoading(false)
+      if (!controller.signal.aborted) {
+        setLoading(false)
+        setInitialLoading(false)
+      }
     }
-  }, [category, query, tag, loading])
+  }, [category, query, tag])
 
   useEffect(() => {
     setMedia([])
@@ -89,7 +103,13 @@ export function InfiniteMediaGrid({
     setHasMore(true)
     setInitialLoading(true)
     fetchMedia(1, true)
-  }, [category, query, tag])
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
+  }, [fetchMedia])
 
   useEffect(() => {
     if (observerRef.current) {
@@ -154,6 +174,7 @@ export function InfiniteMediaGrid({
             createdAt={item.createdAt}
             mediaType={item.mediaType}
             pdfDocument={item.pdfDocument}
+            submittedBy={item.submittedBy}
           />
         ))}
       </div>

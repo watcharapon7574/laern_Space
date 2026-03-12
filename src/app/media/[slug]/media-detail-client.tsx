@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Eye, Play, ExternalLink, Calendar, Tag, FileText, Video } from 'lucide-react'
+import { Eye, Play, ExternalLink, Calendar, Tag, FileText, Video, User } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { EmbedFrame } from '@/components/embed-frame'
@@ -36,6 +36,7 @@ interface Media {
   playCount: number
   likeCount: number
   createdAt: string
+  submittedBy?: string | null
 }
 
 interface MediaDetailClientProps {
@@ -122,6 +123,12 @@ export function MediaDetailClient({ media, relatedMedia }: MediaDetailClientProp
                 </div>
               )}
               <LikeButton mediaId={media.id} initialLikeCount={media.likeCount} variant="icon" />
+              {media.submittedBy && (
+                <div className="flex items-center space-x-1">
+                  <User className="h-4 w-4" />
+                  <span>โดย {media.submittedBy}</span>
+                </div>
+              )}
               <div className="flex items-center space-x-1">
                 <Calendar className="h-4 w-4" />
                 <span>{new Date(media.createdAt).toLocaleDateString('th-TH')}</span>
@@ -355,6 +362,15 @@ export function MediaDetailClient({ media, relatedMedia }: MediaDetailClientProp
           <div className="bg-card dark:bg-card rounded-lg p-6 border border-border dark:border-border">
             <h3 className="font-semibold mb-4">รายละเอียด</h3>
             <dl className="space-y-3">
+              {media.submittedBy && (
+                <div>
+                  <dt className="text-sm text-muted-foreground">ผู้จัดทำ</dt>
+                  <dd className="font-medium flex items-center gap-1.5">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    {media.submittedBy}
+                  </dd>
+                </div>
+              )}
               <div>
                 <dt className="text-sm text-muted-foreground">หมวดหมู่</dt>
                 <dd className="font-medium">

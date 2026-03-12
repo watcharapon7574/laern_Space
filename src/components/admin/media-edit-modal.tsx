@@ -62,6 +62,7 @@ export function MediaEditModal({
   const [categoryId, setCategoryId] = useState('')
   const [tags, setTags] = useState('')
   const [thumbnail, setThumbnail] = useState('')
+  const [submittedBy, setSubmittedBy] = useState('')
   const [saving, setSaving] = useState(false)
   const { categories } = useCategories()
 
@@ -83,6 +84,7 @@ export function MediaEditModal({
         }
       })())
       setThumbnail(media.thumbnail || '')
+      setSubmittedBy(media.submittedBy || '')
       const cat = categories.find((c) => c.key === media.category?.key)
       setCategoryId(cat?.id || '')
     }
@@ -115,6 +117,7 @@ export function MediaEditModal({
         thumbnail: thumbnail.trim() || null,
         videoUrl: videoUrl.trim() || null,
         pdfDocument: pdfDocument.trim() || null,
+        submittedBy: submittedBy.trim() || null,
       }
       if (categoryId) body.categoryId = categoryId
 
@@ -222,6 +225,16 @@ export function MediaEditModal({
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="แท็ก1, แท็ก2, แท็ก3"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="edit-submittedBy">ชื่อผู้จัดทำ</Label>
+            <Input
+              id="edit-submittedBy"
+              value={submittedBy}
+              onChange={(e) => setSubmittedBy(e.target.value)}
+              placeholder="ชื่อผู้จัดทำสื่อ"
             />
           </div>
 

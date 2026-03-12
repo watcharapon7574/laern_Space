@@ -19,7 +19,7 @@ async function getPopularMedia() {
       status: 'APPROVED',
     },
     include: { category: true },
-    take: 8,
+    take: 20,
     orderBy: [
       { viewCount: 'desc' },
       { createdAt: 'desc' },
@@ -149,17 +149,16 @@ export default async function HomePage() {
       <section>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold">สื่อยอดนิยม</h2>
-          <Link
-            href="/search"
-            className="text-primary hover:text-primary/80 font-medium"
-          >
-            ดูทั้งหมด →
-          </Link>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/search">
+              ดูทั้งหมด →
+            </Link>
+          </Button>
         </div>
 
         <Suspense fallback={
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
+            {Array.from({ length: 20 }).map((_, i) => (
               <div key={i} className="h-80 bg-muted animate-pulse rounded-lg" />
             ))}
           </div>

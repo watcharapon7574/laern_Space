@@ -21,6 +21,7 @@ interface Media {
   playCount: number
   likeCount: number
   createdAt: Date | string
+  submittedBy?: string | null
 }
 
 interface MediaGridProps {
@@ -56,6 +57,7 @@ export function MediaGrid({ media, emptyMessage = 'ไม่พบสื่อ�
           createdAt={item.createdAt instanceof Date ? item.createdAt.toISOString() : item.createdAt}
           mediaType={item.mediaType}
           pdfDocument={item.pdfDocument}
+          submittedBy={item.submittedBy}
         />
       ))}
     </div>

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { InfiniteMediaGrid } from '@/components/infinite-media-grid'
 import { SearchWithSuggestions } from '@/components/search-with-suggestions'
 import { Button } from '@/components/ui/button'
@@ -12,40 +12,45 @@ import { useCategories } from '@/lib/hooks/use-categories'
 
 function SearchContent() {
   const searchParams = useSearchParams()
-  const initialQuery = searchParams.get('q') || ''
-  const initialCategory = searchParams.get('category') || ''
+  const router = useRouter()
 
-  const [query, setQuery] = useState(initialQuery)
-  const [category, setCategory] = useState(initialCategory)
-  const [searchKey, setSearchKey] = useState(0)
+  // URL params are the source of truth for search results
+  const urlQuery = searchParams.get('q') || ''
+  const urlCategory = searchParams.get('category') || ''
+
+  // Local state for form inputs only
+  const [inputQuery, setInputQuery] = useState(urlQuery)
+  const [inputCategory, setInputCategory] = useState(urlCategory)
   const { categories, getLabel } = useCategories()
 
+  // Sync URL params → form inputs when URL changes (e.g., tag click navigation)
+  useEffect(() => {
+    setInputQuery(urlQuery)
+    setInputCategory(urlCategory)
+  }, [urlQuery, urlCategory])
+
   const handleSearch = (searchQuery?: string) => {
-    const q = searchQuery !== undefined ? searchQuery : query
+    const q = searchQuery !== undefined ? searchQuery : inputQuery
     const params = new URLSearchParams()
     if (q) params.append('q', q)
-    if (category) params.append('category', category)
-
+    if (inputCategory) params.append('category', inputCategory)
     const url = params.toString() ? `/search?${params.toString()}` : '/search'
-    window.history.replaceState({}, '', url)
-    setSearchKey((prev) => prev + 1)
+    router.replace(url)
   }
 
   const clearFilters = () => {
-    setQuery('')
-    setCategory('')
-    window.history.replaceState({}, '', '/search')
-    setSearchKey((prev) => prev + 1)
+    setInputQuery('')
+    setInputCategory('')
+    router.replace('/search')
   }
 
   const handleCategoryChange = (newCategory: string) => {
-    setCategory(newCategory)
+    setInputCategory(newCategory)
     const params = new URLSearchParams()
-    if (query) params.append('q', query)
+    if (inputQuery) params.append('q', inputQuery)
     if (newCategory) params.append('category', newCategory)
     const url = params.toString() ? `/search?${params.toString()}` : '/search'
-    window.history.replaceState({}, '', url)
-    setSearchKey((prev) => prev + 1)
+    router.replace(url)
   }
 
   return (
@@ -63,9 +68,9 @@ function SearchContent() {
         <div className="flex gap-4 flex-col sm:flex-row">
           <div className="flex-1">
             <SearchWithSuggestions
-              initialValue={query}
+              initialValue={inputQuery}
               onSearch={(q) => {
-                setQuery(q)
+                setInputQuery(q)
                 handleSearch(q)
               }}
               placeholder="ค้นหาสื่อการสอน..."
@@ -73,7 +78,7 @@ function SearchContent() {
           </div>
 
           <div className="sm:w-48">
-            <Select value={category} onValueChange={handleCategoryChange}>
+            <Select value={inputCategory} onValueChange={handleCategoryChange}>
               <SelectTrigger>
                 <SelectValue placeholder="เลือกหมวดหมู่" />
               </SelectTrigger>
@@ -93,7 +98,7 @@ function SearchContent() {
               <Search className="h-4 w-4 mr-2" />
               ค้นหา
             </Button>
-            {(query || category) && (
+            {(inputQuery || inputCategory) && (
               <Button
                 variant="outline"
                 onClick={clearFilters}
@@ -107,17 +112,17 @@ function SearchContent() {
       </div>
 
       {/* Active Filters */}
-      {(query || category) && (
+      {(urlQuery || urlCategory) && (
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm text-muted-foreground">ตัวกรองที่ใช้:</span>
-          {query && (
+          {urlQuery && (
             <Badge variant="secondary">
-              ค้นหา: &ldquo;{query}&rdquo;
+              ค้นหา: &ldquo;{urlQuery}&rdquo;
             </Badge>
           )}
-          {category && (
+          {urlCategory && (
             <Badge variant="secondary">
-              หมวดหมู่: {getLabel(category)}
+              หมวดหมู่: {getLabel(urlCategory)}
             </Badge>
           )}
         </div>
@@ -125,11 +130,11 @@ function SearchContent() {
 
       {/* Results with Infinite Scroll */}
       <InfiniteMediaGrid
-        key={searchKey}
-        query={query}
-        category={category}
+        key={`${urlQuery}-${urlCategory}`}
+        query={urlQuery}
+        category={urlCategory}
         emptyMessage={
-          query || category
+          urlQuery || urlCategory
             ? 'ไม่พบสื่อการสอนที่ตรงกับเงื่อนไขการค้นหา'
             : 'กรุณาใส่คำค้นหาหรือเลือกหมวดหมู่เพื่อค้นหาสื่อ'
         }

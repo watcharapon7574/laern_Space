@@ -27,6 +27,7 @@ import {
   Trash2,
   Pencil,
   FileText,
+  User,
 } from 'lucide-react'
 import { useCategories } from '@/lib/hooks/use-categories'
 
@@ -271,6 +272,12 @@ export default function ManageMediaPage() {
 
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{item.title}</p>
+                  {item.submittedBy && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                      <User className="h-3 w-3" />
+                      {item.submittedBy}
+                    </p>
+                  )}
                   <div className="flex items-center gap-2 mt-1">
                     <Badge className={statusLabels[item.status]?.color}>
                       {statusLabels[item.status]?.label}

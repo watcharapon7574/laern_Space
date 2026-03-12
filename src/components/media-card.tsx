@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { Play, Eye, ExternalLink, FileText } from 'lucide-react'
+import { Play, Eye, ExternalLink, FileText, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FavoriteButton } from '@/components/favorite-button'
 import { LikeButton } from '@/components/like-button'
@@ -30,6 +30,7 @@ interface MediaCardProps {
   createdAt: string
   mediaType?: string
   pdfDocument?: string | null
+  submittedBy?: string | null
 }
 
 export function MediaCard({
@@ -46,6 +47,7 @@ export function MediaCard({
   likeCount,
   mediaType,
   pdfDocument,
+  submittedBy,
 }: MediaCardProps) {
   const isGeneral = mediaType === 'GENERAL'
   const parsedTags = Array.isArray(tags) ? tags : JSON.parse(tags || '[]')
@@ -94,6 +96,13 @@ export function MediaCard({
           </Link>
         </h3>
 
+        {submittedBy && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
+            <User className="h-3 w-3" />
+            <span className="truncate">โดย {submittedBy}</span>
+          </div>
+        )}
+
         {description && (
           <p className="text-muted-foreground text-sm line-clamp-2 mb-3">
             {description}
@@ -104,9 +113,11 @@ export function MediaCard({
           {parsedTags.slice(0, 3).map((tag: string, index: number) => {
             const colorClass = `tag-color-${(index % 8) + 1}`;
             return (
-              <span key={index} className={`${colorClass} text-xs px-2 py-1 rounded-md font-medium`}>
-                {tag}
-              </span>
+              <Link key={index} href={`/search?q=${encodeURIComponent(tag)}`}>
+                <span className={`${colorClass} text-xs px-2 py-1 rounded-md font-medium cursor-pointer hover:opacity-80 transition-opacity`}>
+                  {tag}
+                </span>
+              </Link>
             );
           })}
           {parsedTags.length > 3 && (

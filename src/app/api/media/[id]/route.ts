@@ -45,7 +45,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     const { id } = await context.params
     const body = await request.json()
-    const { title, url, description, categoryId, tags, thumbnail, videoUrl, pdfDocument } = body
+    const { title, url, description, categoryId, tags, thumbnail, videoUrl, pdfDocument, submittedBy } = body
 
     const existingMedia = await prisma.media.findUnique({
       where: { id },
@@ -119,6 +119,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     if (pdfDocument !== undefined) {
       updates.pdfDocument = pdfDocument || null
+    }
+
+    if (submittedBy !== undefined) {
+      updates.submittedBy = submittedBy || null
     }
 
     if (Object.keys(updates).length === 0) {

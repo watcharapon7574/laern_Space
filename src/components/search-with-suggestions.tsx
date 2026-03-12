@@ -36,6 +36,11 @@ export function SearchWithSuggestions({
   const containerRef = useRef<HTMLDivElement>(null)
   const { getLabel } = useCategories()
 
+  // Sync initialValue prop → internal state when it changes (e.g., URL navigation)
+  useEffect(() => {
+    setQuery(initialValue)
+  }, [initialValue])
+
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (query.length < 2) {
