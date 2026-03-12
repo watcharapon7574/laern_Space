@@ -20,35 +20,37 @@ function SearchContent() {
 
   // Local state for form inputs only
   const [inputQuery, setInputQuery] = useState(urlQuery)
-  const [inputCategory, setInputCategory] = useState(urlCategory)
+  const [inputCategory, setInputCategory] = useState(urlCategory || 'all')
   const { categories, getLabel } = useCategories()
 
   // Sync URL params → form inputs when URL changes (e.g., tag click navigation)
   useEffect(() => {
     setInputQuery(urlQuery)
-    setInputCategory(urlCategory)
+    setInputCategory(urlCategory || 'all')
   }, [urlQuery, urlCategory])
 
   const handleSearch = (searchQuery?: string) => {
     const q = searchQuery !== undefined ? searchQuery : inputQuery
+    const category = inputCategory === 'all' ? '' : inputCategory
     const params = new URLSearchParams()
     if (q) params.append('q', q)
-    if (inputCategory) params.append('category', inputCategory)
+    if (category) params.append('category', category)
     const url = params.toString() ? `/search?${params.toString()}` : '/search'
     router.replace(url)
   }
 
   const clearFilters = () => {
     setInputQuery('')
-    setInputCategory('')
+    setInputCategory('all')
     router.replace('/search')
   }
 
   const handleCategoryChange = (newCategory: string) => {
     setInputCategory(newCategory)
+    const category = newCategory === 'all' ? '' : newCategory
     const params = new URLSearchParams()
     if (inputQuery) params.append('q', inputQuery)
-    if (newCategory) params.append('category', newCategory)
+    if (category) params.append('category', category)
     const url = params.toString() ? `/search?${params.toString()}` : '/search'
     router.replace(url)
   }
@@ -83,7 +85,7 @@ function SearchContent() {
                 <SelectValue placeholder="เลือกหมวดหมู่" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ทุกหมวดหมู่</SelectItem>
+                <SelectItem value="all">ทุกหมวดหมู่</SelectItem>
                 {categories.map((cat) => (
                   <SelectItem key={cat.key} value={cat.key}>
                     {cat.label}
@@ -98,7 +100,7 @@ function SearchContent() {
               <Search className="h-4 w-4 mr-2" />
               ค้นหา
             </Button>
-            {(inputQuery || inputCategory) && (
+            {(inputQuery || (inputCategory && inputCategory !== 'all')) && (
               <Button
                 variant="outline"
                 onClick={clearFilters}
