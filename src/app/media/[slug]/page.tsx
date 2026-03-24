@@ -1,3 +1,5 @@
+export const revalidate = 60
+
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { MediaDetailClient } from './media-detail-client'

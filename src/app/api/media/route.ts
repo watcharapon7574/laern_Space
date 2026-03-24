@@ -66,6 +66,12 @@ export async function GET(request: NextRequest) {
         total,
         pages: Math.ceil(total / limit),
       },
+    }, {
+      headers: {
+        'Cache-Control': includeAll
+          ? 'private, no-cache'
+          : 'public, s-maxage=30, stale-while-revalidate=60',
+      },
     })
   } catch (error) {
     console.error('Error fetching media:', error)

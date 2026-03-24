@@ -15,7 +15,7 @@ export function Logo({ size = 'md' }: LogoProps) {
           width={288}
           height={288}
           className="flex-none w-32 sm:w-40 md:w-48 lg:w-64 xl:w-72 h-auto object-contain"
-          priority
+          loading="eager"
         />
         <div className="min-w-0 w-full md:flex-1 overflow-hidden bg-card">
           <Image
@@ -24,7 +24,7 @@ export function Logo({ size = 'md' }: LogoProps) {
             width={800}
             height={200}
             className="block w-full h-auto object-contain"
-            priority
+            loading="eager"
           />
         </div>
       </div>
