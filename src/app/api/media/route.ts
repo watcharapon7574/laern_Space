@@ -8,12 +8,13 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
-    const limit = Math.min(parseInt(searchParams.get('limit') || '12'), 50)
+    const includeAll = searchParams.get('includeAll')
+    const maxLimit = includeAll ? 1000 : 50
+    const limit = Math.min(parseInt(searchParams.get('limit') || '12'), maxLimit)
     const category = searchParams.get('category')
     const tag = searchParams.get('tag')
     const q = searchParams.get('q')
     const mediaType = searchParams.get('mediaType')
-    const includeAll = searchParams.get('includeAll')
     const skip = (page - 1) * limit
 
     const where: Prisma.MediaWhereInput = {}
