@@ -2,7 +2,7 @@ export const revalidate = 60
 
 import { prisma } from '@/lib/prisma'
 import { MediaStatus } from '@prisma/client'
-import { STAFF_LIST, normalizeName, getAgeGroup, type AgeGroup } from '@/lib/staff-data'
+import { STAFF_LIST, buildStaffMatcher, getAgeGroup, type AgeGroup } from '@/lib/staff-data'
 import { SumClient, type MediaScoreEntry } from './sum-client'
 
 const LIKE_SCORE = 3
@@ -21,27 +21,17 @@ async function calculateScores() {
     },
   })
 
-  // Build a lookup: normalized name -> staff info
-  const staffLookup = new Map<string, { name: string; position: string; ageGroup: AgeGroup | null }>()
-  for (const staff of STAFF_LIST) {
-    staffLookup.set(normalizeName(staff.name), {
-      name: staff.name,
-      position: staff.position,
-      ageGroup: getAgeGroup(staff.age),
-    })
-  }
+  const matchStaff = buildStaffMatcher(STAFF_LIST)
 
-  // Each media = one entry
   const entries: MediaScoreEntry[] = []
   const submittedPeople = new Set<string>()
 
   for (const media of allMedia) {
     if (!media.submittedBy) continue
-    const key = normalizeName(media.submittedBy)
-    const staff = staffLookup.get(key)
-    if (!staff) continue // skip if not in staff list
+    const staff = matchStaff(media.submittedBy)
+    if (!staff) continue
 
-    submittedPeople.add(key)
+    submittedPeople.add(staff.name)
 
     const likeScore = media.likeCount * LIKE_SCORE
     const viewScore = media.viewCount * VIEW_SCORE
@@ -50,7 +40,7 @@ async function calculateScores() {
     entries.push({
       staffName: staff.name,
       position: staff.position,
-      ageGroup: staff.ageGroup,
+      ageGroup: getAgeGroup(staff.age),
       mediaTitle: media.title,
       likes: media.likeCount,
       views: media.viewCount,
@@ -93,4 +83,3 @@ export default async function SumPage() {
     />
   )
 }
-// cache bust 1774338651

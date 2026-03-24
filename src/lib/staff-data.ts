@@ -138,7 +138,105 @@ export const STAFF_LIST: StaffMember[] = [
   { name: n('นายเสมา พูลวงษ์'), age: null, staffType: 'จ้างเหมา', position: 'ภารโรง' },
 ]
 
-// Normalize a name for matching (remove spaces, lowercase-ish for Thai)
+// Thai prefixes to strip for matching
+const PREFIXES = [
+  'ว่าที่ร้อยตรีหญิง',
+  'ว่าที่ ร.ต.หญิง',
+  'ว่าที่ ร.ต.',
+  'นางสาว',
+  'นาง',
+  'นาย',
+]
+
+// Strip prefix, extra text, and normalize spaces
+function stripName(name: string): string {
+  let s = name.replace(/\xa0/g, ' ').replace(/\s+/g, ' ').trim()
+  // Remove prefix
+  for (const p of PREFIXES) {
+    if (s.startsWith(p)) {
+      s = s.slice(p.length).trim()
+      break
+    }
+  }
+  // Remove trailing extra info like "ตำแหน่ง ครู"
+  const cutWords = ['ตำแหน่ง']
+  for (const w of cutWords) {
+    const idx = s.indexOf(w)
+    if (idx > 0) s = s.slice(0, idx).trim()
+  }
+  return s
+}
+
+// Extract surname (last word) from a name
+function getSurname(name: string): string {
+  const parts = stripName(name).split(' ').filter(Boolean)
+  return parts.length > 1 ? parts[parts.length - 1] : ''
+}
+
+// Extract first name (first word after stripping prefix)
+function getFirstName(name: string): string {
+  const parts = stripName(name).split(' ').filter(Boolean)
+  return parts[0] || ''
+}
+
+/**
+ * Build a matcher that finds the best staff match for a submittedBy name.
+ * Match priority: exact normalized → surname+firstname → surname only
+ */
+export function buildStaffMatcher(staffList: StaffMember[]) {
+  // Index by normalized full name (no prefix, no spaces)
+  const byExact = new Map<string, StaffMember>()
+  // Index by surname → staff members
+  const bySurname = new Map<string, StaffMember[]>()
+
+  for (const staff of staffList) {
+    const stripped = stripName(staff.name).replace(/\s+/g, '')
+    byExact.set(stripped, staff)
+
+    const surname = getSurname(staff.name)
+    if (surname) {
+      const arr = bySurname.get(surname) || []
+      arr.push(staff)
+      bySurname.set(surname, arr)
+    }
+  }
+
+  return function match(submittedBy: string): StaffMember | null {
+    const stripped = stripName(submittedBy).replace(/\s+/g, '')
+
+    // 1. Exact match (stripped, no spaces)
+    const exact = byExact.get(stripped)
+    if (exact) return exact
+
+    // 2. Match by surname + first name
+    const surname = getSurname(submittedBy)
+    const firstName = getFirstName(submittedBy)
+
+    if (surname) {
+      const candidates = bySurname.get(surname)
+      if (candidates) {
+        // If only 1 person with that surname, it's a match
+        if (candidates.length === 1) return candidates[0]
+        // If multiple, match by first name
+        if (firstName) {
+          const found = candidates.find(c => getFirstName(c.name) === firstName)
+          if (found) return found
+        }
+      }
+    }
+
+    // 3. First name only (single word input like "วัชรพล")
+    if (firstName && !surname) {
+      for (const staff of staffList) {
+        if (getFirstName(staff.name) === firstName) return staff
+      }
+    }
+
+    return null
+  }
+}
+
+// Keep for backward compat
 export function normalizeName(name: string): string {
   return name.replace(/\xa0/g, ' ').replace(/\s+/g, '').trim()
 }
