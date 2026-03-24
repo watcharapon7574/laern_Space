@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Eye, Play, ExternalLink, Calendar, Tag, FileText, Video, User } from 'lucide-react'
+import { Eye, Play, ExternalLink, Calendar, Tag, FileText, Video, User, Pencil } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { EmbedFrame } from '@/components/embed-frame'
 import { MediaGrid } from '@/components/media-grid'
 import { FavoriteButton } from '@/components/favorite-button'
 import { LikeButton } from '@/components/like-button'
+import { MediaEditDialog } from '@/components/media-edit-dialog'
 import { useRecentlyViewed } from '@/lib/hooks'
 import { formatNumber, extractYouTubeId } from '@/lib/utils'
 
@@ -49,6 +50,7 @@ export function MediaDetailClient({ media, relatedMedia }: MediaDetailClientProp
   const [isPlaying, setIsPlaying] = useState(!isGeneral)
   const [hasTrackedView, setHasTrackedView] = useState(false)
   const [hasTrackedPlay, setHasTrackedPlay] = useState(isGeneral)
+  const [editOpen, setEditOpen] = useState(false)
   const { addToRecentlyViewed } = useRecentlyViewed()
 
   const youtubeId = media.videoUrl ? extractYouTubeId(media.videoUrl) : null
@@ -186,6 +188,14 @@ export function MediaDetailClient({ media, relatedMedia }: MediaDetailClientProp
                 category: media.category.key,
               }}
             />
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => setEditOpen(true)}
+            >
+              <Pencil className="h-5 w-5 mr-2" />
+              แก้ไข
+            </Button>
           </div>
         </div>
       </div>
@@ -407,6 +417,14 @@ export function MediaDetailClient({ media, relatedMedia }: MediaDetailClientProp
           <MediaGrid media={relatedMedia} />
         </section>
       )}
+
+      {/* Edit Dialog */}
+      <MediaEditDialog
+        media={media}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onUpdated={() => window.location.reload()}
+      />
     </div>
   )
 }

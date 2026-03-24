@@ -87,3 +87,22 @@ export async function isAuthenticated(): Promise<boolean> {
   const session = await getSession()
   return session !== null
 }
+
+/**
+ * Generate a daily 3-digit consent code (refreshes every day)
+ * Uses HMAC with JWT_SECRET + date string to produce a deterministic code
+ */
+export function generateDailyConsentCode(): string {
+  const today = new Date().toISOString().split('T')[0] // e.g. "2026-03-24"
+  const hash = crypto
+    .createHmac('sha256', JWT_SECRET)
+    .update(`consent-code-${today}`)
+    .digest('hex')
+  // Take first 3 numeric digits from hash
+  const digits = hash.replace(/[^0-9]/g, '')
+  return digits.slice(0, 3).padStart(3, '0')
+}
+
+export function verifyConsentCode(code: string): boolean {
+  return code === generateDailyConsentCode()
+}

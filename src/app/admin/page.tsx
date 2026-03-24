@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatNumber } from '@/lib/utils'
-import { Eye, Play, FileVideo, TrendingUp, BarChart3, Settings, CheckCircle, Plus, Tag } from 'lucide-react'
+import { Eye, Play, FileVideo, TrendingUp, BarChart3, Settings, CheckCircle, Plus, Tag, ShieldCheck, RefreshCw } from 'lucide-react'
 import { useCategories } from '@/lib/hooks/use-categories'
 
 interface MediaItem {
@@ -30,6 +30,8 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
   const [authenticated, setAuthenticated] = useState(false)
+  const [consentCode, setConsentCode] = useState<string | null>(null)
+  const [showCode, setShowCode] = useState(false)
   const { getLabel } = useCategories()
 
   useEffect(() => {
@@ -45,8 +47,21 @@ export default function AdminDashboard() {
       }
       setAuthenticated(true)
       fetchStats()
+      fetchConsentCode()
     } catch (error) {
       router.push('/auth/signin')
+    }
+  }
+
+  const fetchConsentCode = async () => {
+    try {
+      const response = await fetch('/api/admin/consent-code')
+      if (response.ok) {
+        const data = await response.json()
+        setConsentCode(data.code)
+      }
+    } catch (error) {
+      console.error('Error fetching consent code:', error)
     }
   }
 
@@ -187,6 +202,44 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Consent Code Card */}
+          <Card className="border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div>
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-amber-600" />
+                  รหัสยืนยันการแก้ไขวันนี้
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  บอกรหัสนี้ให้ผู้ใช้ที่ต้องการแก้ไขสื่อ รหัสจะเปลี่ยนใหม่ทุกวัน
+                </CardDescription>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCode(!showCode)}
+              >
+                {showCode ? 'ซ่อน' : 'แสดงรหัส'}
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4">
+                <div className="text-4xl font-mono font-bold tracking-[0.3em] text-amber-700 dark:text-amber-400">
+                  {showCode && consentCode ? consentCode : '* * *'}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={fetchConsentCode}
+                  className="text-xs"
+                >
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  รีเฟรช
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Top Media */}
