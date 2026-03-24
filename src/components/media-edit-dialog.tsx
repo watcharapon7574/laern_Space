@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, X, Plus, ShieldCheck } from 'lucide-react'
+import { Loader2, X, Plus, ShieldCheck, Upload, ImageIcon, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCategories } from '@/lib/hooks/use-categories'
 
@@ -56,6 +56,8 @@ export function MediaEditDialog({ media, open, onOpenChange, onUpdated }: MediaE
   const [tags, setTags] = useState<string[]>(parsedTags)
   const [newTag, setNewTag] = useState('')
   const [loading, setLoading] = useState(false)
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false)
+  const [uploadingPdf, setUploadingPdf] = useState(false)
   const [error, setError] = useState('')
 
   // Resolve categoryId once categories load
@@ -71,6 +73,50 @@ export function MediaEditDialog({ media, open, onOpenChange, onUpdated }: MediaE
 
   const removeTag = (tagToRemove: string) => {
     setTags(tags.filter(tag => tag !== tagToRemove))
+  }
+
+  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingThumbnail(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (res.ok) {
+        setFormData(prev => ({ ...prev, thumbnail: data.url }))
+        toast.success('อัพโหลดรูปภาพสำเร็จ')
+      } else {
+        toast.error(data.error || 'อัพโหลดรูปภาพไม่สำเร็จ')
+      }
+    } catch {
+      toast.error('เกิดข้อผิดพลาดในการอัพโหลด')
+    } finally {
+      setUploadingThumbnail(false)
+    }
+  }
+
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingPdf(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload-pdf', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (res.ok) {
+        setFormData(prev => ({ ...prev, pdfDocument: data.url }))
+        toast.success('อัพโหลดเอกสาร PDF สำเร็จ')
+      } else {
+        toast.error(data.error || 'อัพโหลด PDF ไม่สำเร็จ')
+      }
+    } catch {
+      toast.error('เกิดข้อผิดพลาดในการอัพโหลด')
+    } finally {
+      setUploadingPdf(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -206,15 +252,40 @@ export function MediaEditDialog({ media, open, onOpenChange, onUpdated }: MediaE
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="edit-thumbnail">URL รูปภาพ</Label>
-            <Input
-              id="edit-thumbnail"
-              type="url"
-              placeholder="https://..."
-              value={formData.thumbnail}
-              onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
-              disabled={loading}
-            />
+            <Label>รูปภาพปก</Label>
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={loading || uploadingThumbnail}
+                onClick={() => document.getElementById('edit-thumbnail-file')?.click()}
+                className="flex-shrink-0"
+              >
+                {uploadingThumbnail ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <ImageIcon className="h-4 w-4 mr-2" />
+                )}
+                {uploadingThumbnail ? 'กำลังอัพโหลด...' : 'เลือกรูปภาพ'}
+              </Button>
+              <input
+                id="edit-thumbnail-file"
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                onChange={handleThumbnailUpload}
+                className="hidden"
+              />
+              {formData.thumbnail && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
+                  <img src={formData.thumbnail} alt="preview" className="h-10 w-10 rounded object-cover flex-shrink-0" />
+                  <span className="truncate">{formData.thumbnail.split('/').pop()}</span>
+                  <button type="button" onClick={() => setFormData({ ...formData, thumbnail: '' })} className="text-red-500 hover:text-red-700 flex-shrink-0">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">รองรับ JPEG, PNG, GIF, WebP (สูงสุด 5MB)</p>
           </div>
 
           <div className="space-y-2">
@@ -230,46 +301,55 @@ export function MediaEditDialog({ media, open, onOpenChange, onUpdated }: MediaE
           </div>
 
           {!isOnline && (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="edit-pdfDocument">URL เอกสาร PDF</Label>
-                <Input
-                  id="edit-pdfDocument"
-                  type="url"
-                  placeholder="https://..."
-                  value={formData.pdfDocument}
-                  onChange={(e) => setFormData({ ...formData, pdfDocument: e.target.value })}
-                  disabled={loading}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-videoUrl">URL คลิปวิดีโอ</Label>
-                <Input
-                  id="edit-videoUrl"
-                  type="url"
-                  placeholder="https://youtube.com/..."
-                  value={formData.videoUrl}
-                  onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                  disabled={loading}
-                />
-              </div>
-            </>
-          )}
-
-          {isOnline && (
             <div className="space-y-2">
-              <Label htmlFor="edit-pdfDocument-online">URL เอกสารแนบ (PDF)</Label>
+              <Label htmlFor="edit-videoUrl">URL คลิปวิดีโอ</Label>
               <Input
-                id="edit-pdfDocument-online"
+                id="edit-videoUrl"
                 type="url"
-                placeholder="https://..."
-                value={formData.pdfDocument}
-                onChange={(e) => setFormData({ ...formData, pdfDocument: e.target.value })}
+                placeholder="https://youtube.com/..."
+                value={formData.videoUrl}
+                onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
                 disabled={loading}
               />
             </div>
           )}
+
+          <div className="space-y-2">
+            <Label>{isOnline ? 'เอกสารแนบ (PDF)' : 'เอกสาร PDF'}</Label>
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={loading || uploadingPdf}
+                onClick={() => document.getElementById('edit-pdf-file')?.click()}
+                className="flex-shrink-0"
+              >
+                {uploadingPdf ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <FileText className="h-4 w-4 mr-2" />
+                )}
+                {uploadingPdf ? 'กำลังอัพโหลด...' : 'เลือกไฟล์ PDF'}
+              </Button>
+              <input
+                id="edit-pdf-file"
+                type="file"
+                accept="application/pdf"
+                onChange={handlePdfUpload}
+                className="hidden"
+              />
+              {formData.pdfDocument && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
+                  <FileText className="h-5 w-5 text-red-500 flex-shrink-0" />
+                  <span className="truncate">{formData.pdfDocument.split('/').pop()}</span>
+                  <button type="button" onClick={() => setFormData({ ...formData, pdfDocument: '' })} className="text-red-500 hover:text-red-700 flex-shrink-0">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">รองรับเฉพาะไฟล์ PDF (สูงสุด 10MB)</p>
+          </div>
 
           <div className="space-y-2">
             <Label>แท็ก</Label>
