@@ -9,15 +9,14 @@ const LIKE_SCORE = 3
 const VIEW_SCORE = 1
 const PLAY_SCORE = 2
 
-export interface ScoreEntry {
-  name: string
+export interface MediaScoreEntry {
+  staffName: string
   position: string
   ageGroup: AgeGroup | null
-  mediaCount: number
-  mediaTitles: string[]
-  totalLikes: number
-  totalViews: number
-  totalPlays: number
+  mediaTitle: string
+  likes: number
+  views: number
+  plays: number
   likeScore: number
   viewScore: number
   playScore: number
@@ -25,12 +24,11 @@ export interface ScoreEntry {
 }
 
 interface SumClientProps {
-  groups: Record<AgeGroup, ScoreEntry[]>
-  noAgeGroup: ScoreEntry[]
+  groups: Record<AgeGroup, MediaScoreEntry[]>
+  noAgeGroup: MediaScoreEntry[]
   totalStaff: number
   totalMedia: number
   totalSubmitted: number
-  totalScore: number
 }
 
 function getRankIcon(rank: number) {
@@ -40,7 +38,7 @@ function getRankIcon(rank: number) {
   return <span className="text-sm text-muted-foreground">{rank}</span>
 }
 
-function ScoreTable({ entries }: { entries: ScoreEntry[] }) {
+function ScoreTable({ entries }: { entries: MediaScoreEntry[] }) {
   const sorted = [...entries].sort((a, b) => b.totalScore - a.totalScore)
 
   return (
@@ -49,8 +47,7 @@ function ScoreTable({ entries }: { entries: ScoreEntry[] }) {
         <thead>
           <tr className="bg-muted/50 border-b border-border">
             <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground w-12">อันดับ</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">ชื่อ - นามสกุล</th>
-            <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground w-16">สื่อ</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">ผู้จัดทำ / ชื่อสื่อ</th>
             <th className="px-4 py-3 text-center text-xs font-semibold text-red-500 w-24">
               <span className="flex items-center justify-center gap-1"><Heart className="h-3 w-3" />x{LIKE_SCORE}</span>
             </th>
@@ -69,7 +66,7 @@ function ScoreTable({ entries }: { entries: ScoreEntry[] }) {
             const isTop3 = rank <= 3 && entry.totalScore > 0
             return (
               <tr
-                key={entry.name}
+                key={`${entry.staffName}-${entry.mediaTitle}`}
                 className={`border-b border-border last:border-0 transition-colors hover:bg-muted/30 ${
                   isTop3 ? 'bg-yellow-50/50 dark:bg-yellow-950/10' : ''
                 }`}
@@ -78,30 +75,22 @@ function ScoreTable({ entries }: { entries: ScoreEntry[] }) {
                   {getRankIcon(rank)}
                 </td>
                 <td className="px-4 py-3">
-                  <div className="font-medium text-sm">{entry.name}</div>
-                  <div className="text-xs text-muted-foreground">{entry.position}</div>
-                  {entry.mediaTitles.length > 0 && (
-                    <div className="mt-1 space-y-0.5">
-                      {entry.mediaTitles.map((title, i) => (
-                        <div key={i} className="text-xs text-blue-600 dark:text-blue-400">
-                          - {title}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-center text-sm font-medium">{entry.mediaCount}</td>
-                <td className="px-4 py-3 text-center">
-                  <div className="text-sm">{entry.totalLikes}</div>
-                  <div className="text-xs text-red-500 font-medium">{entry.likeScore} คะแนน</div>
+                  <div className="font-medium text-sm">{entry.staffName}</div>
+                  <div className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                    {entry.mediaTitle}
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-center">
-                  <div className="text-sm">{entry.totalViews}</div>
-                  <div className="text-xs text-blue-500 font-medium">{entry.viewScore} คะแนน</div>
+                  <div className="text-sm">{entry.likes}</div>
+                  <div className="text-xs text-red-500 font-medium">{entry.likeScore}</div>
                 </td>
                 <td className="px-4 py-3 text-center">
-                  <div className="text-sm">{entry.totalPlays}</div>
-                  <div className="text-xs text-green-500 font-medium">{entry.playScore} คะแนน</div>
+                  <div className="text-sm">{entry.views}</div>
+                  <div className="text-xs text-blue-500 font-medium">{entry.viewScore}</div>
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <div className="text-sm">{entry.plays}</div>
+                  <div className="text-xs text-green-500 font-medium">{entry.playScore}</div>
                 </td>
                 <td className="px-4 py-3 text-center">
                   <span className={`text-lg font-bold ${
@@ -113,6 +102,13 @@ function ScoreTable({ entries }: { entries: ScoreEntry[] }) {
               </tr>
             )
           })}
+          {sorted.length === 0 && (
+            <tr>
+              <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                ยังไม่มีสื่อที่ส่งในกลุ่มนี้
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
@@ -121,7 +117,7 @@ function ScoreTable({ entries }: { entries: ScoreEntry[] }) {
 
 const TABS: AgeGroup[] = ['20-30', '31-40', '41+']
 
-export function SumClient({ groups, noAgeGroup, totalStaff, totalMedia, totalSubmitted, totalScore }: SumClientProps) {
+export function SumClient({ groups, noAgeGroup, totalStaff, totalMedia, totalSubmitted }: SumClientProps) {
   const [activeTab, setActiveTab] = useState<AgeGroup | 'none'>('20-30')
 
   const currentEntries = activeTab === 'none' ? noAgeGroup : groups[activeTab]
@@ -169,7 +165,7 @@ export function SumClient({ groups, noAgeGroup, totalStaff, totalMedia, totalSub
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div className="bg-card border border-border rounded-xl p-3 text-center">
           <div className="text-xl font-bold text-foreground">{totalStaff}</div>
           <div className="text-xs text-muted-foreground">บุคลากรทั้งหมด</div>
@@ -181,10 +177,6 @@ export function SumClient({ groups, noAgeGroup, totalStaff, totalMedia, totalSub
         <div className="bg-card border border-border rounded-xl p-3 text-center">
           <div className="text-xl font-bold text-foreground">{totalSubmitted}</div>
           <div className="text-xs text-muted-foreground">คนที่ส่งสื่อแล้ว</div>
-        </div>
-        <div className="bg-card border border-border rounded-xl p-3 text-center">
-          <div className="text-xl font-bold text-yellow-600">{totalScore}</div>
-          <div className="text-xs text-muted-foreground">คะแนนรวมทั้งหมด</div>
         </div>
       </div>
 
@@ -203,7 +195,7 @@ export function SumClient({ groups, noAgeGroup, totalStaff, totalMedia, totalSub
             >
               {AGE_GROUP_LABELS[tab]}
               <span className={`ml-1.5 text-xs ${activeTab === tab ? 'text-blue-100' : 'text-muted-foreground'}`}>
-                ({groups[tab].length})
+                ({groups[tab].length} สื่อ)
               </span>
             </button>
           ))}
@@ -218,7 +210,7 @@ export function SumClient({ groups, noAgeGroup, totalStaff, totalMedia, totalSub
             >
               ไม่ระบุอายุ
               <span className={`ml-1.5 text-xs ${activeTab === 'none' ? 'text-blue-100' : 'text-muted-foreground'}`}>
-                ({noAgeGroup.length})
+                ({noAgeGroup.length} สื่อ)
               </span>
             </button>
           )}
@@ -227,7 +219,7 @@ export function SumClient({ groups, noAgeGroup, totalStaff, totalMedia, totalSub
         {/* Active Tab Header */}
         <div className="px-6 py-3 bg-muted/30 border-b border-border">
           <h2 className="font-bold text-foreground">{currentLabel} - รางวัลอันดับ 1-3</h2>
-          <p className="text-xs text-muted-foreground">{currentEntries.length} คน</p>
+          <p className="text-xs text-muted-foreground">{currentEntries.length} สื่อ (จัดอันดับแยกต่อสื่อ)</p>
         </div>
 
         {/* Table */}
